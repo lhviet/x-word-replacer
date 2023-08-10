@@ -1,8 +1,9 @@
 <script>
     let url;
     async function getUrl() {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true});
-      url = tab.url;
+      // const [tab] = await chrome.tabs.query({ active: true, currentWindow: true});
+      // url = tab.url;
+        url = "Sorry. This extension don't have Permission to get your URL.";
     }
 </script>
 
