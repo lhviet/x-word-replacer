@@ -1,11 +1,26 @@
 {
-  "name": "My Chrome Extension",
-  "description": "A browser extension made with Svelte Kit",
+  "name": "Ultra Notes",
+  "description": "An extension to help you take Notes easily and securely.",
   "version": "1.0.0",
   "manifest_version": 3,
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "sidePanel",
+    "storage"
+  ],
   "action": {
-    "default_title": "Svelte Extension",
-    "default_icon": "favicon.png",
-    "default_popup": "index.html"
-  }
+    "default_title": "Ultra Notes",
+    "default_popup": "index.html",
+    "default_icon": "favicon.png"
+  },
+  "icons": { "128": "favicon.png" },
+  "side_panel": {
+    "default_path": "/sidepanel.html"
+  },
+  "background": {
+    "service_worker": "service_worker.js",
+    "type": "module"
+  },
+  "offline_enabled": true
 }
