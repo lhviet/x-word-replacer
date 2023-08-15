@@ -1,0 +1,181 @@
+html {
+    width: 450px;
+    height: 250px;
+}
+
+body {
+    margin: 0;
+    background-color: rgba(204, 233, 217, 0.75);
+    font-family: 'Open Sans', arial, sans-serif;
+    font-size: 13px;
+    text-shadow: 0 1px rgba(255, 255, 255, 0.5);
+
+    table {
+        font-family: 'Open Sans', arial, sans-serif;
+        font-size: 13px;
+        text-shadow: 0 1px rgba(255, 255, 255, 0.5);
+        width: 100%;
+    }
+}
+
+input[type="checkbox"] {
+    margin: 0 6px 0 0;
+}
+
+.popup-header {
+    border-bottom: solid 1px #bababa;
+    padding: 5px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .link-youtube {
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    button {
+        color: #fff;
+        background-color: #ff5a5a;
+        border-color: #ed4141;
+        padding: 5px 15px;
+        height: 40px;
+    }
+}
+
+.popup-body::-webkit-scrollbar {
+    width: 12px; /* Adjust width of scrollbar */
+    background-color: rgba(204, 233, 217, 0.75);
+}
+
+/* Set the thumb (the draggable part) color */
+.popup-body::-webkit-scrollbar-thumb {
+    background-color: #808080; /* Adjust to your desired thumb color */
+    border-radius: 4px; /* optional: add border radius for rounded thumb */
+}
+
+/* Set the track (the non-draggable part) color */
+.popup-body::-webkit-scrollbar-track {
+    background-color: rgba(204, 233, 217, 0.75);
+}
+
+.popup-body {
+    padding: 15px 0 15px 12px;
+    max-height: 400px;
+    overflow-y: scroll;
+
+    .btn_info {
+        color: #fff;
+        background-color: #30aed3;
+        border-color: #46b8da;
+        font-size: 1.2rem;
+        line-height: 1;
+        padding: 0 4px;
+        font-weight: 800;
+    }
+
+    .btn_remove {
+        color: #fff;
+        border-color: #ee7470;
+        background-color: #ff9a96;
+        padding: 0 6px;
+    }
+
+    table {
+        text-align:left;
+
+        td {
+            padding-top: 5px;
+            padding-bottom: 5px;
+            border-bottom: dashed 1px #dbdbdb;
+
+            * {
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            .clearable {
+                position: relative;
+
+                button {
+                    position: absolute;
+                    top: 0;
+                    right: -13px;
+                    opacity: 1;
+                    height: 100%;
+                    width: 22px;
+
+                    &:hover {
+                        color: #f52;
+                    }
+                }
+            }
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+    }
+
+    .data_field {
+        padding-right: 13px; /* add space for the 'x' icon*/
+    }
+
+    .form-control {
+        display: inline-block;
+        width: 100%;
+        padding: .35rem;
+        font-size: .9rem;
+        line-height: 1.2;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    }
+}
+
+footer {
+    padding: 10px;
+    border-top: solid 1px #bababa;
+
+    label {
+        font-size: .9rem;
+        font-weight: 300;
+        color: #636363;
+    }
+}
+
+button {
+    display: inline-block;
+    padding: 3px 6px;
+    margin-bottom: 0;
+    font-size: .9rem;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.form-donate {
+    display: inline-table;
+    vertical-align: middle;
+    margin: 0;
+    padding: 0;
+}
+
+.text-center {
+    text-align: center;
+}

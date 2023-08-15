@@ -1,24 +1,26 @@
 {
-  "name": "Ultra Notes",
-  "description": "An extension to help you take Notes easily and securely.",
+  "name": "X Word Replacer",
+  "description": "Quickly replacing words in web pages",
   "version": "1.0.0",
   "manifest_version": 3,
   "permissions": [
-    "sidePanel",
     "storage"
   ],
   "action": {
-    "default_title": "Ultra Notes",
+    "default_title": "X Word Replacer",
     "default_popup": "index.html",
-    "default_icon": "favicon.png"
+    "default_icon": "images/icon_128.png"
   },
   "icons": { "128": "favicon.png" },
-  "side_panel": {
-    "default_path": "/sidepanel.html"
-  },
   "background": {
     "service_worker": "service_worker.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"]
+    }
+  ],
   "offline_enabled": true
 }
