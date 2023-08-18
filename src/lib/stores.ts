@@ -21,8 +21,11 @@ const initStorage = async (
   writableSearchReplace: Writable<SearchReplace[]>,
   writableSearchConfig: Writable<SearchConfig>,
 ) => {
-  const { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
-  if (!searchReplace || searchReplace.length === 0) {
+  let { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
+  if (!searchReplace) searchReplace = [];
+  if (!searchConfig) searchConfig = { matchCase: false, inputOnly: false, regex: false };
+
+  if (searchReplace.length === 0) {
     searchReplace.push({
       active: true,
       search: '',
@@ -31,8 +34,8 @@ const initStorage = async (
   }
 
   // Store the whole data of editor and note metadata to the Svelte store, assume that they are small enough to be stored in memory
-  if (searchReplace) writableSearchReplace.set(searchReplace);
-  if (searchConfig) writableSearchConfig.set(searchConfig);
+  writableSearchReplace.set(searchReplace);
+  writableSearchConfig.set(searchConfig);
 
   // After loading the data, start auto-saving for any changes from now on
   startAutoSaving();
