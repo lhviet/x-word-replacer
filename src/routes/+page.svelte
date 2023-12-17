@@ -46,7 +46,9 @@
 <div class='popup-header'>
 	<img src='images/icon_48.png' />
 
-	<UltraNotesBtn />
+	<div style='display: inline-block'>
+		<UltraNotesBtn />
+	</div>
 	<button class='btn' on:click={onClickSearchAndReplace}>Search & Replace</button>
 </div>
 <div class='popup-body'>

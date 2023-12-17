@@ -1,4 +1,5 @@
-import { Writable, writable } from "svelte/store";
+import { type Writable, writable } from "svelte/store";
+import { browser } from '$app/environment';
 
 export interface AppState {
   loading: boolean;
@@ -14,31 +15,6 @@ export interface SearchConfig {
   matchCase: boolean;
   inputOnly: boolean;
   regex: boolean;
-}
-
-// --------- CHROME STORAGE ----------
-const initStorage = async (
-  writableSearchReplace: Writable<SearchReplace[]>,
-  writableSearchConfig: Writable<SearchConfig>,
-) => {
-  let { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
-  if (!searchReplace) searchReplace = [];
-  if (!searchConfig) searchConfig = { matchCase: false, inputOnly: false, regex: false };
-
-  if (searchReplace.length === 0) {
-    searchReplace.push({
-      active: true,
-      search: '',
-      replace: '',
-    });
-  }
-
-  // Store the whole data of editor and note metadata to the Svelte store, assume that they are small enough to be stored in memory
-  writableSearchReplace.set(searchReplace);
-  writableSearchConfig.set(searchConfig);
-
-  // After loading the data, start auto-saving for any changes from now on
-  startAutoSaving();
 }
 
 // --------- SVELTE STORAGE ----------
@@ -59,7 +35,31 @@ export const searchConfigState: Writable<SearchConfig> = writable({
   regex: false,
 });
 
-initStorage(searchReplaceState, searchConfigState);
+// --------- CHROME STORAGE ----------
+if (browser) {
+  initStorage();
+}
+export async function initStorage() {
+  let { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
+
+  if (!searchReplace) searchReplace = [];
+  if (!searchConfig) searchConfig = { matchCase: false, inputOnly: false, regex: false };
+
+  if (searchReplace.length === 0) {
+    searchReplace.push({
+      active: true,
+      search: '',
+      replace: '',
+    });
+  }
+
+  // Store the whole data of editor and note metadata to the Svelte store, assume that they are small enough to be stored in memory
+  searchReplaceState.set(searchReplace);
+  searchConfigState.set(searchConfig);
+
+  // After loading the data, start auto-saving for any changes from now on
+  startAutoSaving();
+}
 
 // --------- SVELTE CHROME STORAGE SYNCHRONIZATION ----------
 export interface SyncStore {

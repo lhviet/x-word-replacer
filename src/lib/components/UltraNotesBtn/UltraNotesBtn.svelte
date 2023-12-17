@@ -6,12 +6,26 @@
 <a class='nav-link custom-effect {className}'
    href='https://chrome.google.com/webstore/detail/ultra-notes/ngfhnakbmjknpcepkeiilllocgbdfehi'
    target='_blank'>
-    <span>Have you ever try Ultra Notes?</span>
-    <i class='ms-2 fs-4 align-middle fa fa-pencil-square-o'></i>
+    <span>Have you ever tried Ultra Notes?</span>
+    <img src='images/ultra-notes.png' alt='Ultra Notes' width='20px' height='20px'/>
 </a>
 
 <style>
+    .nav-link {
+        display: block;
+        padding: 0.5rem;
+        color: rgba(255, 255, 255, 0.55);
+        text-decoration: none;
+        background: 0 0;
+        border: 0;
+        transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out;
+    }
     .custom-effect {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        position: relative;
+        overflow: hidden;
         text-align: center;
         color: #fff;
         text-decoration: none;
@@ -22,7 +36,6 @@
         background-size: 400%;
         border-radius: 15px;
         z-index: 1;
-
     }
 
     .custom-effect:before {
