@@ -1,6 +1,7 @@
 <script lang='ts'>
-	import { appState, searchConfigState, searchReplaceState } from '$lib/stores';
-	import TransparentBtn from '$lib/components/TransparentBtn/TransparentBtn.svelte';
+	import { searchConfigState, searchReplaceState } from '$lib/stores';
+	import TransparentBtn from '$lib/components/TransparentBtn';
+	import UltraNotesBtn from '$lib/components/UltraNotesBtn';
 
 	// Add new fields of Search & handleReplace
 	function addNewField() {
@@ -44,9 +45,8 @@
 
 <div class='popup-header'>
 	<img src='images/icon_48.png' />
-	<a class='link-youtube' href='http://youtu.be/lcZCdM1Bx_E' target='_blank'>
-		<img src='images/Youtube-logo-png.png' height='34' />
-	</a>
+
+	<UltraNotesBtn />
 	<button class='btn' on:click={onClickSearchAndReplace}>Search & Replace</button>
 </div>
 <div class='popup-body'>
@@ -131,6 +131,12 @@
 							 width='1' height='1' />
 				</form>
 			</td>
+		</tr>
+		<tr>
+			<td colspan='2' style='text-align:center;'>
+				<a class='link-youtube' href='http://youtu.be/lcZCdM1Bx_E' target='_blank'>
+					<img src='images/Youtube-logo-png.png' height='34' />
+				</a>
 		</tr>
 	</table>
 </footer>
