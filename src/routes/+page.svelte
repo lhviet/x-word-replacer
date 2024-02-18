@@ -134,11 +134,5 @@
 				</form>
 			</td>
 		</tr>
-		<tr>
-			<td colspan='2' style='text-align:center;'>
-				<a class='link-youtube' href='http://youtu.be/lcZCdM1Bx_E' target='_blank'>
-					<img src='images/Youtube-logo-png.png' height='34' />
-				</a>
-		</tr>
 	</table>
 </footer>
