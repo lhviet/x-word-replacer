@@ -1,4 +1,5 @@
 <script lang='ts'>
+	import { colorPalettes } from '$lib/colors';
 	import { searchConfigState, searchReplaceState } from '$lib/stores';
 	import TransparentBtn from '$lib/components/TransparentBtn';
 	import UltraNotesBtn from '$lib/components/UltraNotesBtn';
@@ -6,11 +7,15 @@
 	// Add new fields of Search & handleReplace
 	function addNewField() {
 		searchReplaceState.update((state) => {
+			const color = colorPalettes[state.length % colorPalettes.length];
 			state.push({
 				active: true,
 				search: '',
-				replace: ''
+				replace: '',
+				backgroundColor: color[0],
+				textColor: color[1],
 			});
+
 			return state;
 		});
 	}
@@ -40,23 +45,27 @@
 	// So far, we need to send message to the serviceWorker.
 	// The serviceWorker, in turn, will message the ContentScript to manipulate the DOM
 	const onClickSearchAndReplace = () => chrome.runtime.sendMessage('searchAndReplace');
-	
+	const onClickSearchAndHighlight = () => chrome.runtime.sendMessage('searchAndHighlight');
+
 </script>
 
 <div class='popup-header'>
 	<img src='images/icon_48.png' />
 
-	<div style='display: inline-block'>
-		<UltraNotesBtn />
+	<div>
+		<div style='display: inline-block'>
+			<UltraNotesBtn />
+		</div>
+		<span style='padding: 0 5px;'></span>
+		<button class='btn' on:click={onClickSearchAndReplace}>Replace</button>
 	</div>
-	<button class='btn' on:click={onClickSearchAndReplace}>Search & Replace</button>
 </div>
 <div class='popup-body'>
 	<table id='tbl_fields'>
 		<tr>
 			<th></th>
 			<th></th>
-			<th>Search for</th>
+			<th>Search and <button class='highlight-btn' on:click={onClickSearchAndHighlight}>Highlight</button></th>
 			<th>Replace by</th>
 			<th>
 				<button class='btn_info' on:click={addNewField}>+</button>
@@ -70,7 +79,7 @@
 				</td>
 				<td>
 					<span class='clearable'>
-						<input class='form-control data_field search' bind:value={field.search} />
+						<input bind:value={field.search} class='form-control data_field search' style='background-color: {field.backgroundColor}; color: {field.textColor}' />
 						<TransparentBtn on:click={() => clearSearch(i)}>x</TransparentBtn>
 					</span>
 				</td>
@@ -102,18 +111,26 @@
 					</tr>
 					<tr>
 						<td>
-							<input id='idIsInputFieldOnly' type='checkbox' bind:checked={$searchConfigState.inputOnly} />
-						</td>
-						<td>
-							<label for='idIsInputFieldOnly'>Replace in Input/TextArea only</label>
-						</td>
-					</tr>
-					<tr>
-						<td>
 							<input id='idIsRegexUsing' type='checkbox' bind:checked={$searchConfigState.regex} />
 						</td>
 						<td>
 							<label for='idIsRegexUsing'>Using Regular Expression</label>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<input id='idIsTextInputFields' type='checkbox' bind:checked={$searchConfigState.textInputFields} />
+						</td>
+						<td>
+							<label for='idIsTextInputFields'>Input/TextArea</label>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<input id='idIsWebpage' type='checkbox' bind:checked={$searchConfigState.webpage} />
+						</td>
+						<td>
+							<label for='idIsWebpage'>Web page</label>
 						</td>
 					</tr>
 				</table>

@@ -6,9 +6,10 @@ async function getCurrentTab() {
 
 // listening for messages sending from the Popup
 chrome.runtime.onMessage.addListener(async (message) => {
-	if (message !== 'searchAndReplace')
-		return;
-
 	const tab = await getCurrentTab();
-	await chrome.tabs.sendMessage(tab.id, 'searchAndReplaceInContentScript');
+	if (message === 'searchAndReplace') {
+		await chrome.tabs.sendMessage(tab.id, 'searchAndReplaceInContentScript');
+	} else if (message === 'searchAndHighlight') {
+		await chrome.tabs.sendMessage(tab.id, 'searchAndHighlightInContentScript');
+	}
 });

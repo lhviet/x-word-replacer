@@ -6,7 +6,7 @@
 <a class='nav-link custom-effect {className}'
    href='https://chrome.google.com/webstore/detail/ultra-notes/ngfhnakbmjknpcepkeiilllocgbdfehi'
    target='_blank'>
-    <span>Have you ever tried Ultra Notes?</span>
+    <span>Ultra Notes</span>
     <img src='images/ultra-notes.png' alt='Ultra Notes' width='20px' height='20px'/>
 </a>
 

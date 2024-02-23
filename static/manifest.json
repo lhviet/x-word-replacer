@@ -1,7 +1,7 @@
 {
   "name": "X Word Replacer",
   "description": "Quickly replacing words in web pages",
-  "version": "1.0.2.1",
+  "version": "1.0.3",
   "manifest_version": 3,
   "permissions": [
     "storage"
@@ -19,7 +19,12 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content-script.js"]
+      "js": [
+        "content/content-script.js"
+      ],
+      "css": [
+        "content/styles.css"
+      ]
     }
   ],
   "offline_enabled": true
