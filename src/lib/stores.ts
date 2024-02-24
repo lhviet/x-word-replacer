@@ -38,7 +38,7 @@ export const searchReplaceState: Writable<SearchReplace[]> = writable([
 export const searchConfigState: Writable<SearchConfig> = writable({
   matchCase: false,
   regex: false,
-  textInputFields: false,
+  textInputFields: true,
   webpage: true,
 });
 
@@ -50,16 +50,19 @@ export async function initStorage() {
   let { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
 
   if (!searchReplace) searchReplace = [];
-	if (!searchConfig) searchConfig = {
-		matchCase: false,
-		regex: false,
-
-    // to search and replace in text input and textarea fields
-		textInputFields: false,
-
-    // to search and replace in the whole webpage
-		webpage: true,
-	};
+	if (!searchConfig) {
+    searchConfig = {
+      matchCase: false,
+      regex: false,
+      // to search and replace in text input and textarea fields
+      textInputFields: true,
+      // to search and replace in the whole webpage
+      webpage: true,
+    };
+  } else {
+    if (searchConfig.webpage === undefined) searchConfig.webpage = true;
+    if (searchConfig.textInputFields === undefined) searchConfig.textInputFields = true;
+  }
 
   if (searchReplace.length === 0) {
     searchReplace.push({
