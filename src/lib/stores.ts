@@ -12,6 +12,7 @@ export interface SearchReplace {
   replace: string;
   backgroundColor?: string;
   textColor?: string;
+  count?: number;
 }
 
 export interface SearchConfig {
@@ -33,6 +34,7 @@ export const searchReplaceState: Writable<SearchReplace[]> = writable([
     replace: '',
     backgroundColor: '',
     textColor: '',
+    count: 0,
   }
 ]);
 export const searchConfigState: Writable<SearchConfig> = writable({
@@ -71,6 +73,7 @@ export async function initStorage() {
       replace: '',
       backgroundColor: colorPalettes[0][0],
       textColor: colorPalettes[0][1],
+      count: 0,
     });
   } else {
     // If there is no color in the searchReplace, set the default color

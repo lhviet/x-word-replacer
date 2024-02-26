@@ -44,8 +44,28 @@
 	// Unfortunately, sending message directly from popup to ContentScript doesn't work
 	// So far, we need to send message to the serviceWorker.
 	// The serviceWorker, in turn, will message the ContentScript to manipulate the DOM
-	const onClickSearchAndReplace = () => chrome.runtime.sendMessage('searchAndReplace');
-	const onClickSearchAndHighlight = () => chrome.runtime.sendMessage('searchAndHighlight');
+	const onClickSearchAndReplace = async () => {
+		const result = await chrome.runtime.sendMessage('searchAndReplace');
+		searchReplaceState.update((state) => {
+			for (const field of state) {
+				const resultItem = result[field.search];
+				field['count'] = resultItem ?? 0;
+			}
+			console.log(state);
+			return state;
+		});
+	}
+	const onClickSearchAndHighlight = async () => {
+		const result = await chrome.runtime.sendMessage('searchAndHighlight');
+		searchReplaceState.update((state) => {
+			for (const field of state) {
+				const resultItem = result[field.search];
+				field['count'] = resultItem ?? 0;
+			}
+			console.log(state);
+			return state;
+		});
+	}
 
 </script>
 
@@ -78,16 +98,19 @@
 					<input class='selected_check' type='checkbox' bind:checked={field.active} />
 				</td>
 				<td>
-					<span class='clearable'>
+					<div class='clearable'>
 						<input bind:value={field.search} class='form-control data_field search' style='background-color: {field.backgroundColor}; color: {field.textColor}' />
 						<TransparentBtn on:click={() => clearSearch(i)}>x</TransparentBtn>
-					</span>
+					</div>
+					{#if field.count}
+						<span class='count'>{field.count}</span>
+					{/if}
 				</td>
 				<td>
-					<span class='clearable'>
+					<div class='clearable'>
 						<input class='form-control data_field replace' bind:value={field.replace} />
 						<TransparentBtn on:click={() => clearReplace(i)}>x</TransparentBtn>
-					</span>
+					</div>
 				</td>
 				<td class='text-center'>
 					<button class='btn_remove' on:click={() => removeSearchField(i)}>x</button>

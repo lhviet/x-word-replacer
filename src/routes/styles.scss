@@ -1,6 +1,6 @@
 html {
-    width: 450px;
-    height: 250px;
+    width: 500px;
+    height: 260px;
 }
 
 body {
@@ -94,6 +94,10 @@ input[type="checkbox"] {
                 vertical-align: middle;
             }
 
+            .selected_check {
+                margin-right: 0;
+            }
+
             .clearable {
                 position: relative;
 
@@ -109,6 +113,15 @@ input[type="checkbox"] {
                         color: #f52;
                     }
                 }
+            }
+
+            .count {
+                position: relative;
+                left: 0.8rem;
+                top: 1px;
+                width: 0;
+                font-size: 0.9rem;
+                color: gray;
             }
         }
 

@@ -5,11 +5,21 @@ async function getCurrentTab() {
 }
 
 // listening for messages sending from the Popup
-chrome.runtime.onMessage.addListener(async (message) => {
-	const tab = await getCurrentTab();
-	if (message === 'searchAndReplace') {
-		await chrome.tabs.sendMessage(tab.id, 'searchAndReplaceInContentScript');
-	} else if (message === 'searchAndHighlight') {
-		await chrome.tabs.sendMessage(tab.id, 'searchAndHighlightInContentScript');
-	}
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	// INFO: using async/await doesn't work correctly in this case of listener function
+	getCurrentTab().then(tab => {
+		if (!tab) {
+			console.error('No active tab found. Please select a tab, refresh the page and try again.');
+			return;
+		}
+
+		if (message === 'searchAndReplace') {
+			chrome.tabs.sendMessage(tab.id, 'searchAndReplaceInContentScript', sendResponse);
+		} else if (message === 'searchAndHighlight') {
+			chrome.tabs.sendMessage(tab.id, 'searchAndHighlightInContentScript', sendResponse);
+		}
+	});
+
+	// Return true to indicate that sendResponse will be called asynchronously
+	return true;
 });
