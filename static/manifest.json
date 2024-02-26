@@ -1,13 +1,10 @@
 {
   "name": "X Word Replacer",
   "description": "Quickly replacing words in web pages",
-  "version": "1.0.3.2",
+  "version": "1.0.4.1",
   "manifest_version": 3,
   "permissions": [
-    "storage",
-    "tabs",
-    "activeTab",
-    "runtime"
+    "storage"
   ],
   "action": {
     "default_title": "X Word Replacer",

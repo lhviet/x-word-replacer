@@ -51,7 +51,6 @@
 				const resultItem = result[field.search];
 				field['count'] = resultItem ?? 0;
 			}
-			console.log(state);
 			return state;
 		});
 	}
@@ -62,7 +61,6 @@
 				const resultItem = result[field.search];
 				field['count'] = resultItem ?? 0;
 			}
-			console.log(state);
 			return state;
 		});
 	}
