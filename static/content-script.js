@@ -128,7 +128,7 @@ function searchAndReplace(item, searchConfig, color = undefined) {
 
 	if (!html) {
 		// Replace words in the current document body by checking each DOM Element Node
-		replaceTextWithElement(result, body, searchRegex, replace, textInputFields, color);
+		replaceTextWithElement(result, body, searchRegex, replace, textInputFields, webpage, color);
 
 	} else {
 		const replaceAndCount = (match) => {
@@ -209,7 +209,7 @@ async function doSearchAndHighlight() {
  * let element = document.getElementById('plugins-overview');
  * replaceTextWithElement(element, 'Overview', 'span');
  */
-function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replaceValue, searchTextInputs, color = undefined) {
+function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replaceValue, searchTextInputs, webpage, color = undefined) {
 	// Iterate through all child nodes of the element and search or replace text with the given regex searchValue
 
 	// if color is provided, it means users want to highlight text, and highlighting doesn't apply to input fields
@@ -237,17 +237,17 @@ function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replac
 			else if (child.tagName.toLowerCase() === 'iframe') {
 				try {
 					let iframeDoc = child.contentDocument || child.contentWindow.document;
-					replaceTextWithElement(resultObj, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, color);
+					replaceTextWithElement(resultObj, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, webpage, color);
 				} catch (e) {
 					console.error('Cannot access iframe contents:', e);
 				}
 
 			} else {
 				// Recursively call the function on child elements
-				replaceTextWithElement(resultObj, child, regexSearchValue, replaceValue, searchTextInputs, color);
+				replaceTextWithElement(resultObj, child, regexSearchValue, replaceValue, searchTextInputs, webpage, color);
 			}
 		}
-		else if (child.nodeType === Node.TEXT_NODE) {
+		else if (webpage && child.nodeType === Node.TEXT_NODE) {
 			const text = child.nodeValue;
 
 			if (color) {  // Replace with HTML element

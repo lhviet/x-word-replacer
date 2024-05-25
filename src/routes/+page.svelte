@@ -114,7 +114,7 @@
 					<button class='btn_info' on:click={addNewField}>+</button>
 				</th>
 			</tr>
-			{#each $searchReplaceState as field, i}
+			{#each $searchReplaceState.sort((a, b) => b.active - a.active) as field, i}
 				<tr>
 					<td>{i + 1}</td>
 					<td>
@@ -155,7 +155,7 @@
 									<input id='idIsMatchCase' type='checkbox' bind:checked={$searchConfigState.matchCase} />
 								</td>
 								<td>
-									<label for='idIsMatchCase'>Match Case</label>
+									<label for='idIsMatchCase'>Match Case (regex /i)</label>
 								</td>
 							</tr>
 							<tr>
@@ -163,7 +163,7 @@
 									<input id='idIsRegexUsing' type='checkbox' bind:checked={$searchConfigState.regex} />
 								</td>
 								<td>
-									<label for='idIsRegexUsing'>Use Regular Expression</label>
+									<label for='idIsRegexUsing'><a href="https://viet.pughtml.com/posts/post-7-x-word-replacer-multi-highlight-with-regex">Use Regular Expression</a></label>
 								</td>
 							</tr>
 							<tr>
