@@ -2,6 +2,20 @@
 * All the code here is executed in the context of the current tab.
 * It will read the DOM, search and replace the text, and send the result back to the service worker.
 * */
+// Listen for messages sent from service worker to the content-script
+// The reason for messaging is that only the content-script can manipulate the DOM directly
+// But the service worker can't access the DOM. Service worker works with the browser API directly.
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+	// INFO: using async/await doesn't work correctly in this case of listener function
+	if (message === 'searchAndReplaceInContentScript') {
+		doSearchAndReplace().then(sendResponse);
+	} else if (message === 'searchAndHighlightInContentScript') {
+		doSearchAndHighlight().then(sendResponse);
+	}
+
+	// Return true to indicate that sendResponse will be called asynchronously
+	return true;
+});
 
 // Helper function to escape special characters in a string for regex
 // Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
@@ -16,8 +30,9 @@ function isValidRegex(searchText) {
 		new RegExp(searchText);
 		return true;
 	} catch (e) {
-		return false;
+		console.warn('Invalid regex:', searchText, e);
 	}
+	return false;
 }
 
 // Helper function to get the HTML element with the highlight color as a string
@@ -25,8 +40,7 @@ const getColorHTMLElement = (highlightColor, count, searchValue, replaceValue) =
 	if (!highlightColor) {
 		return replaceValue;
 	}
-
-	return `<span class="xword-search-n-highlight" style="background-color: ${highlightColor.backgroundColor}; color: ${highlightColor.textColor}">${searchValue}<span>${count}</span></span>`;
+	return `<span class="xword-search-n-highlight" style="background-color: ${highlightColor.backgroundColor}; color: ${highlightColor.textColor}">${searchValue}<span style="user-select: none;">${count}</span></span>`;
 }
 
 // Helper function to convert HTML string to DOM element
@@ -103,23 +117,20 @@ function searchAndReplace(item, searchConfig, color = undefined) {
 	//   and use the escaped text as a regex, i.e., `.` -> `\.`
 	const regexStr = regex ? search : RegExEscape(search);
 	if (!isValidRegex(regexStr)) {
-		console.error('Invalid search (regex) string:', regexStr);
 		return 0;
 	}
 	const searchRegex = new RegExp(regexStr, flag);
 
-	// using an object to hold the count result globally
-	const result = {
-		count: 0,
-	};
+	// using an object to hold the count result globally, that is used in recursive functions
+	const result = { count: 0 };
 
 	const body = document.getElementsByTagName('body')[0];
 
 	if (!html) {
 		// Replace words in the current document body by checking each DOM Element Node
 		replaceTextWithElement(result, body, searchRegex, replace, textInputFields, color);
-	}
-	else {
+
+	} else {
 		const replaceAndCount = (match) => {
 			result.count++;
 			return getColorHTMLElement(color, result.count, match, replace);
@@ -186,21 +197,6 @@ async function doSearchAndHighlight() {
 	return result;
 }
 
-// Listen for messages sent from service worker to the content-script
-// The reason for messaging is that only the content-script can manipulate the DOM directly
-// But the service worker can't access the DOM. Service worker works with the browser API directly.
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-	// INFO: using async/await doesn't work correctly in this case of listener function
-	if (message === 'searchAndReplaceInContentScript') {
-		doSearchAndReplace().then(sendResponse);
-	} else if (message === 'searchAndHighlightInContentScript') {
-		doSearchAndHighlight().then(sendResponse);
-	}
-
-	// Return true to indicate that sendResponse will be called asynchronously
-	return true;
-});
-
 /**
  * INFO: a DOM element can be an element node, a text node, or an attribute node,
  * i.e., h1Elem = <h1>Research Overview</h1> has a Text node "overview", if we check h1Elem.childNodes[0].nodeType it will return 3
@@ -234,8 +230,8 @@ function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replac
 					// Do nothing if users want to highlight the text (search), instead of replace it
 					continue;
 				}
-				child.value = replaceValue;
-				// TODO: Handle input and textarea elements with highlight (search results against a regex/search)
+				child.value = child.value.replace(regexSearchValue, replaceValue);
+				// TODO: Handle input and textarea elements with highlight (search results to be shown to users against a regex/search)
 			}
 			// Update iframe elements
 			else if (child.tagName.toLowerCase() === 'iframe') {
@@ -245,6 +241,7 @@ function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replac
 				} catch (e) {
 					console.error('Cannot access iframe contents:', e);
 				}
+
 			} else {
 				// Recursively call the function on child elements
 				replaceTextWithElement(resultObj, child, regexSearchValue, replaceValue, searchTextInputs, color);
@@ -275,7 +272,7 @@ function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replac
 					}
 				}
 				child.remove(); // Remove the original text node
-				// parent.removeChild(element); // Remove the original text node
+
 			} else {
 				// Replace with plain text
 				child.nodeValue = text.replace(regexSearchValue, replaceValue);

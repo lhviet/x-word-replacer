@@ -85,6 +85,7 @@
 
 <div class='popup-header'>
 	<img src='images/icon_48.png' />
+
 	{#if $appState.loading}
 		<div style='display: inline-block; margin-left: 10px;'>
 			Loading...
