@@ -20,6 +20,7 @@ export interface SearchConfig {
   regex: boolean;
   textInputFields: boolean;
   webpage: boolean;
+  html: boolean;
 }
 
 // --------- SVELTE STORAGE ----------
@@ -42,6 +43,7 @@ export const searchConfigState: Writable<SearchConfig> = writable({
   regex: false,
   textInputFields: true,
   webpage: true,
+  html: false,
 });
 
 // --------- CHROME STORAGE ----------
@@ -58,8 +60,10 @@ export async function initStorage() {
       regex: false,
       // to search and replace in text input and textarea fields
       textInputFields: true,
-      // to search and replace in the whole webpage
+      // to search and replace in the whole webpage content
       webpage: true,
+      // to search and replace in the whole webpage including HTML tags
+      html: false,
     };
   } else {
     if (searchConfig.webpage === undefined) searchConfig.webpage = true;

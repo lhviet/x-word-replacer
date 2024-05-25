@@ -1,6 +1,7 @@
 html {
-    width: 500px;
-    height: 260px;
+    min-width: 550px;
+    min-height: 280px;
+    max-height: 600px;
 }
 
 body {
@@ -61,7 +62,7 @@ input[type="checkbox"] {
 
 .popup-body {
     padding: 15px 0 15px 12px;
-    max-height: 400px;
+    max-height: 410px;
     overflow-y: scroll;
 
     .btn_info {
@@ -119,9 +120,10 @@ input[type="checkbox"] {
                 position: relative;
                 left: 0.8rem;
                 top: 1px;
-                width: 0;
+                width: auto;
                 font-size: 0.9rem;
                 color: gray;
+                user-select: none;
             }
         }
 
@@ -150,13 +152,22 @@ input[type="checkbox"] {
 }
 
 footer {
-    padding: 10px;
+    padding: 5px 10px;
     border-top: solid 1px #bababa;
 
     label {
         font-size: .9rem;
         font-weight: 300;
         color: #636363;
+    }
+
+    h4 {
+        margin-top: 0;
+        margin-bottom: .5rem;
+    }
+
+    i {
+        font-size: .8rem
     }
 }
 
@@ -196,7 +207,7 @@ button {
 .highlight-btn {
     color: #464646;
     background-color: #ffe15a;
-    border-color: #ffcb64;
+    border-color: #c29232;
     padding: 2px 5px;
     border-radius: 3px;
     margin: 0 5px;

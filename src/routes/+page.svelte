@@ -123,7 +123,7 @@
 	<table>
 		<tbody>
 			<tr>
-				<td>
+				<td style="width: 190px;">
 					<table>
 						<tbody>
 							<tr>
@@ -139,7 +139,7 @@
 									<input id='idIsRegexUsing' type='checkbox' bind:checked={$searchConfigState.regex} />
 								</td>
 								<td>
-									<label for='idIsRegexUsing'>Using Regular Expression</label>
+									<label for='idIsRegexUsing'>Use Regular Expression</label>
 								</td>
 							</tr>
 							<tr>
@@ -175,6 +175,18 @@
 								 src='https://www.paypalobjects.com/en_US/i/scr/pixel.gif'
 								 width='1' height='1' />
 					</form>
+					<table style="text-align: left">
+						<tbody>
+							<tr>
+								<td>
+									<input id='idIsHTML' type='checkbox' bind:checked={$searchConfigState.html} />
+								</td>
+								<td>
+									<label for='idIsHTML'>Raw HTML <i>(modify html may break your page)</i></label>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</td>
 			</tr>
 		</tbody>

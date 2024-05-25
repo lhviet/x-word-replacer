@@ -13,7 +13,7 @@
   },
   "icons": { "128": "favicon.png" },
   "background": {
-    "service_worker": "service_worker.js",
+    "service_worker": "service-worker.js",
     "type": "module"
   },
   "content_scripts": [
