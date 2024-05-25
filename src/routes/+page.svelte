@@ -1,6 +1,6 @@
 <script lang='ts'>
 	import { colorPalettes } from '$lib/colors';
-	import { searchConfigState, searchReplaceState } from '$lib/stores';
+	import { appState, searchConfigState, searchReplaceState } from '$lib/stores';
 	import TransparentBtn from '$lib/components/TransparentBtn';
 	import UltraNotesBtn from '$lib/components/UltraNotesBtn';
 
@@ -45,6 +45,10 @@
 	// So far, we need to send message to the serviceWorker.
 	// The serviceWorker, in turn, will message the ContentScript to manipulate the DOM
 	const onClickSearchAndReplace = async () => {
+		appState.update((state) => {
+			state.loading = true;
+			return state;
+		});
 		const result = await chrome.runtime.sendMessage('searchAndReplace');
 		searchReplaceState.update((state) => {
 			for (const field of state) {
@@ -53,8 +57,16 @@
 			}
 			return state;
 		});
+		appState.update((state) => {
+			state.loading = false;
+			return state;
+		});
 	}
 	const onClickSearchAndHighlight = async () => {
+		appState.update((state) => {
+			state.loading = true;
+			return state;
+		});
 		const result = await chrome.runtime.sendMessage('searchAndHighlight');
 		searchReplaceState.update((state) => {
 			for (const field of state) {
@@ -63,18 +75,26 @@
 			}
 			return state;
 		});
+		appState.update((state) => {
+			state.loading = false;
+			return state;
+		});
 	}
 
 </script>
 
 <div class='popup-header'>
 	<img src='images/icon_48.png' />
+	{#if $appState.loading}
+		<div style='display: inline-block; margin-left: 10px;'>
+			Loading...
+		</div>
+	{/if}
 
 	<div>
 		<div style='display: inline-block'>
 			<UltraNotesBtn />
 		</div>
-		<span style='padding: 0 5px;'></span>
 		<button class='btn' on:click={onClickSearchAndReplace}>Replace</button>
 	</div>
 </div>
@@ -84,7 +104,10 @@
 			<tr>
 				<th></th>
 				<th></th>
-				<th>Search and <button class='highlight-btn' on:click={onClickSearchAndHighlight}>Highlight</button></th>
+				<th>
+					Search and
+					<button class='highlight-btn' on:click={onClickSearchAndHighlight}>Highlight</button>
+				</th>
 				<th>Replace by</th>
 				<th>
 					<button class='btn_info' on:click={addNewField}>+</button>
