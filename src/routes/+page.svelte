@@ -15,7 +15,7 @@
 				backgroundColor: color[0],
 				textColor: color[1],
 			});
-
+			state.sort((a, b) => b.active - a.active);
 			return state;
 		});
 	}
@@ -23,6 +23,8 @@
 	function removeSearchField(index: number) {
 		searchReplaceState.update((state) => {
 			state.splice(index, 1);
+			state.sort((a, b) => b.active - a.active);
+
 			return state;
 		});
 	}
@@ -55,6 +57,7 @@
 				const resultItem = result[field.search];
 				field['count'] = resultItem ?? 0;
 			}
+			state.sort((a, b) => b.active - a.active);
 			return state;
 		});
 		appState.update((state) => {
@@ -73,6 +76,7 @@
 				const resultItem = result[field.search];
 				field['count'] = resultItem ?? 0;
 			}
+			state.sort((a, b) => b.active - a.active);
 			return state;
 		});
 		appState.update((state) => {
@@ -114,7 +118,7 @@
 					<button class='btn_info' on:click={addNewField}>+</button>
 				</th>
 			</tr>
-			{#each $searchReplaceState.sort((a, b) => b.active - a.active) as field, i}
+			{#each $searchReplaceState as field, i}
 				<tr>
 					<td>{i + 1}</td>
 					<td>
