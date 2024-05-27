@@ -1,6 +1,6 @@
 ## Logic
 
-![Logic](diagrams/x-word-replacer.drawio)
+![Logic](diagrams/x-word-replacer.drawio.svg)
 
 
 ## Developing
