@@ -130,7 +130,7 @@
 							<TransparentBtn on:click={() => clearSearch(i)}>x</TransparentBtn>
 						</div>
 						{#if field.count}
-							<span class='count'>{field.count}</span>
+							<span>{field.count}</span>
 						{/if}
 					</td>
 					<td>
@@ -167,7 +167,7 @@
 									<input id='idIsRegexUsing' type='checkbox' bind:checked={$searchConfigState.regex} />
 								</td>
 								<td>
-									<label for='idIsRegexUsing'><a href="https://viet.pughtml.com/posts/post-7-x-word-replacer-multi-highlight-with-regex">Use Regular Expression</a></label>
+									<label for='idIsRegexUsing'><a target="_blank" href="https://viet.pughtml.com/posts/post-7-x-word-replacer-multi-highlight-with-regex">Use Regular Expression</a></label>
 								</td>
 							</tr>
 							<tr>

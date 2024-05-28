@@ -3,12 +3,13 @@
     padding: 2px;
 }
 
-.xword-search-n-highlight > span {
+.xword-search-n-highlight > span.x-word-count {
     display: none;
+    user-select: none;
     position: absolute;
     font-size: .7em;
     top: -2px;
-    right: -3px;
+    right: -0.4em;
     color: grey;
 }
 
@@ -16,6 +17,6 @@
     border-bottom: solid 1px rgba(255, 84, 84, 0.72);
 }
 
-.xword-search-n-highlight:hover > span {
+.xword-search-n-highlight:hover > span.x-word-count {
     display: block;
 }
