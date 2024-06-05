@@ -4,6 +4,8 @@
 	import TransparentBtn from '$lib/components/TransparentBtn';
 	import UltraNotesBtn from '$lib/components/UltraNotesBtn';
 
+	import { Button } from "$lib/components/ui/button";
+
 	// Add new fields of Search & handleReplace
 	function addNewField() {
 		searchReplaceState.update((state) => {
@@ -43,6 +45,9 @@
 		});
 	}
 
+	// TODO: improve the below with tabs.sendmessage
+	//   https://developer.chrome.com/docs/extensions/reference/api/runtime#method-sendMessage
+	// INFO: current/legacy/should be improved:
 	// Unfortunately, sending message directly from popup to ContentScript doesn't work
 	// So far, we need to send message to the serviceWorker.
 	// The serviceWorker, in turn, will message the ContentScript to manipulate the DOM
@@ -100,7 +105,8 @@
 		<div style='display: inline-block'>
 			<UltraNotesBtn />
 		</div>
-		<button class='btn' on:click={onClickSearchAndReplace}>Replace</button>
+<!--		<button class='btn' on:click={onClickSearchAndReplace}>Replace</button>-->
+		<Button on:click={onClickSearchAndReplace}>Replace</Button>
 	</div>
 </div>
 <div class='popup-body'>

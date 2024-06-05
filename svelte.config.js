@@ -1,9 +1,12 @@
-import preprocess from "svelte-preprocess";
+// import adapter from '@sveltejs/adapter-auto';
 import adapter from '@sveltejs/adapter-static';
+import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	preprocess: preprocess(),
+	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
+	// for more information about preprocessors
+	preprocess: vitePreprocess(),
 
 	kit: {
 		// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
@@ -17,6 +20,11 @@ const config = {
 
 		appDir: 'app',  // default is _app, the chrome extension will detect _ as private directory and will not working
 
+		// https://www.reddit.com/r/sveltejs/comments/vvn38e/question_serviceworker_messages_in_sveltekit/
+		// https://kit.svelte.dev/docs/service-workers
+		serviceWorker: {
+			register: false,
+		}
 	}
 };
 

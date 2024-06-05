@@ -13,17 +13,6 @@ To structure the content scripts source code, there are two script files are use
   }],
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
 ## Building
 
 To create a production version of your app:
@@ -32,6 +21,22 @@ To create a production version of your app:
 npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+### Service Worker
+To sendMessage correctly, we need to disable auto-registering the service worker in the `svelte.config.js` file.
+```js
+serviceWorker: {
+    register: false
+}
+```
+* https://kit.svelte.dev/docs/service-workers
+* https://www.reddit.com/r/sveltejs/comments/vvn38e/question_serviceworker_messages_in_sveltekit/
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+## Setup
+### Tailwind CSS
+* https://tailwindcss.com/docs/guides/sveltekit
+
+### shadcn-svelte Components
+* Install
+    * https://shadcn-svelte.com/docs/installation/sveltekit
+* Add components
+    * https://shadcn-svelte.com/docs/components/accordion
