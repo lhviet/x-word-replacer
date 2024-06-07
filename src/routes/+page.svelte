@@ -5,6 +5,12 @@
 	import UltraNotesBtn from '$lib/components/UltraNotesBtn';
 
 	import { Button } from "$lib/components/ui/button";
+	import { Switch } from "$lib/components/ui/switch";
+	import * as Table from "$lib/components/ui/table";
+	import { Checkbox } from "$lib/components/ui/checkbox";
+	import { Input } from "$lib/components/ui/input";
+	import { SquarePlus, SquareX } from 'lucide-svelte';
+
 
 	// Add new fields of Search & handleReplace
 	function addNewField() {
@@ -90,6 +96,12 @@
 		});
 	}
 
+	function loseSearchFocus() {
+		if ($searchConfigState.autoHighlight) {
+			onClickSearchAndHighlight();
+		}
+	}
+
 </script>
 
 <div class='popup-header'>
@@ -102,58 +114,62 @@
 	{/if}
 
 	<div>
-		<div style='display: inline-block'>
-			<UltraNotesBtn />
-		</div>
-<!--		<button class='btn' on:click={onClickSearchAndReplace}>Replace</button>-->
+		<div class="inline-block mr-2"><UltraNotesBtn /></div>
 		<Button on:click={onClickSearchAndReplace}>Replace</Button>
 	</div>
 </div>
 <div class='popup-body'>
-	<table id='tbl_fields'>
-		<tbody>
-			<tr>
-				<th></th>
-				<th></th>
-				<th>
+	<Table.Root>
+		<Table.Header>
+			<Table.Row>
+				<Table.Head class="w-[1rem] text-left p-1">#</Table.Head>
+				<Table.Head class="w-[1rem] p-1"></Table.Head>
+				<Table.Head class="text-slate-800 p-1">
 					Search and
-					<button class='highlight-btn' on:click={onClickSearchAndHighlight}>Highlight</button>
-				</th>
-				<th>Replace by</th>
-				<th>
-					<button class='btn_info' on:click={addNewField}>+</button>
-				</th>
-			</tr>
+					<Switch class="h-auto align-middle data-[state=checked]:bg-slate-400" bind:checked={$searchConfigState.autoHighlight} /> auto
+					<Button class="bg-yellow-300 hover:bg-yellow-400 border-slate-600 border-[1px] text-primary px-2 py-1 h-auto ml-1" on:click={onClickSearchAndHighlight}>Highlight</Button>
+				</Table.Head>
+				<Table.Head class="w-auto p-0"></Table.Head>
+				<Table.Head class="p-1">Replace by</Table.Head>
+				<Table.Head class="text-right p-0">
+					<TransparentBtn on:click={addNewField} class="align-middle">
+						<SquarePlus class="h-6 w-6 text-blue-800 hover:text-green-900" />
+					</TransparentBtn>
+				</Table.Head>
+			</Table.Row>
+		</Table.Header>
+		<Table.Body>
 			{#each $searchReplaceState as field, i}
-				<tr>
-					<td>{i + 1}</td>
-					<td>
-						<input class='selected_check' type='checkbox' bind:checked={field.active} />
-					</td>
-					<td>
-						<div class='clearable'>
-							<input bind:value={field.search} class='form-control data_field search' style='background-color: {field.backgroundColor}; color: {field.textColor}' />
-							<TransparentBtn on:click={() => clearSearch(i)}>x</TransparentBtn>
-						</div>
-						{#if field.count}
-							<span>{field.count}</span>
-						{/if}
-					</td>
-					<td>
-						<div class='clearable'>
-							<input class='form-control data_field replace' bind:value={field.replace} />
-							<TransparentBtn on:click={() => clearReplace(i)}>x</TransparentBtn>
-						</div>
-					</td>
-					<td class='text-center'>
-						<button class='btn_remove' on:click={() => removeSearchField(i)}>x</button>
-					</td>
-				</tr>
+			<Table.Row class="p-2 pl-0">
+				<Table.Cell class="text-xs px-1">{i + 1}</Table.Cell>
+				<Table.Cell class="text-xs p-0">
+					<input type='checkbox' class="align-middle" bind:checked={field.active} />
+				</Table.Cell>
+				<Table.Cell class="relative px-2 py-1">
+					<Input bind:value={field.search} on:focusout={loseSearchFocus} class="p-1 h-auto" style='background-color: {field.backgroundColor}; color: {field.textColor}' />
+					<TransparentBtn class="absolute right-3.5 top-2 text-slate-700 hover:text-destructive" on:click={() => clearSearch(i)}>x</TransparentBtn>
+				</Table.Cell>
+				<Table.Cell class="p-0">
+					{#if field.count}
+						{field.count}
+					{/if}
+				</Table.Cell>
+				<Table.Cell class="relative px-2 py-1">
+					<Input bind:value={field.replace} class="p-1 h-auto bg-secondary" />
+					<TransparentBtn class="absolute right-3.5 top-2 text-slate-700 hover:text-destructive" on:click={() => clearReplace(i)}>x</TransparentBtn>
+				</Table.Cell>
+				<Table.Cell class="text-center p-0">
+					<TransparentBtn class="align-middle" on:click={() => removeSearchField(i)}>
+						<SquareX class="h-5 w-5 text-gray-500" />
+					</TransparentBtn>
+				</Table.Cell>
+			</Table.Row>
 			{/each}
-		</tbody>
-	</table>
+		</Table.Body>
+	</Table.Root>
 </div>
-<footer>
+
+<footer class="relative">
 	<table>
 		<tbody>
 			<tr>
@@ -162,7 +178,7 @@
 						<tbody>
 							<tr>
 								<td>
-									<input id='idIsMatchCase' type='checkbox' bind:checked={$searchConfigState.matchCase} />
+									<input id='idIsMatchCase' type='checkbox' class='mr-2' bind:checked={$searchConfigState.matchCase} />
 								</td>
 								<td>
 									<label for='idIsMatchCase'>Match Case (regex /i)</label>
@@ -170,7 +186,7 @@
 							</tr>
 							<tr>
 								<td>
-									<input id='idIsRegexUsing' type='checkbox' bind:checked={$searchConfigState.regex} />
+									<input id='idIsRegexUsing' type='checkbox' class='mr-2' bind:checked={$searchConfigState.regex} />
 								</td>
 								<td>
 									<label for='idIsRegexUsing'><a target="_blank" href="https://viet.pughtml.com/posts/post-7-x-word-replacer-multi-highlight-with-regex">Use Regular Expression</a></label>
@@ -178,7 +194,7 @@
 							</tr>
 							<tr>
 								<td>
-									<input id='idIsTextInputFields' type='checkbox' bind:checked={$searchConfigState.textInputFields} />
+									<input id='idIsTextInputFields' type='checkbox' class='mr-2' bind:checked={$searchConfigState.textInputFields} />
 								</td>
 								<td>
 									<label for='idIsTextInputFields'>Input/TextArea</label>
@@ -186,7 +202,7 @@
 							</tr>
 							<tr>
 								<td>
-									<input id='idIsWebpage' type='checkbox' bind:checked={$searchConfigState.webpage} />
+									<input id='idIsWebpage' type='checkbox' class='mr-2' bind:checked={$searchConfigState.webpage} />
 								</td>
 								<td>
 									<label for='idIsWebpage'>Web page</label>
@@ -213,7 +229,7 @@
 						<tbody>
 							<tr>
 								<td>
-									<input id='idIsHTML' type='checkbox' bind:checked={$searchConfigState.html} />
+									<input id='idIsHTML' type='checkbox' class='mr-2' bind:checked={$searchConfigState.html} />
 								</td>
 								<td>
 									<label for='idIsHTML'>Raw HTML <i>(modify html may break your page)</i></label>

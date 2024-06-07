@@ -126,5 +126,22 @@
 
 		return result.count;
 	}
+
+	// when page is loaded
+	if (document.readyState === 'complete') {
+		doSearchAndHighlight();
+	}
+	else {
+		document.onreadystatechange = async function () {
+			if (document.readyState === "complete") {
+				const { searchConfig } = await utils.getActiveSearchReplaceItems();
+				const { autoHighlight } = searchConfig;
+				if (autoHighlight) {
+					console.info('Auto-highlighting...');
+					doSearchAndHighlight();
+				}
+			}
+		}
+	}
 })();
 

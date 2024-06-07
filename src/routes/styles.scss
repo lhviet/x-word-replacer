@@ -78,28 +78,16 @@
 }
 
 html {
-    min-width: 550px;
+    min-width: 600px;
     min-height: 280px;
-    max-height: 600px;
 }
 
 body {
     margin: 0;
     background-color: rgba(204, 233, 217, 0.75);
-    font-family: 'Open Sans', arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
     font-size: 13px;
     text-shadow: 0 1px rgba(255, 255, 255, 0.5);
-
-    table {
-        font-family: 'Open Sans', arial, sans-serif;
-        font-size: 13px;
-        text-shadow: 0 1px rgba(255, 255, 255, 0.5);
-        width: 100%;
-    }
-}
-
-input[type="checkbox"] {
-    margin: 0 6px 0 0;
 }
 
 .popup-header {
@@ -112,14 +100,6 @@ input[type="checkbox"] {
     .link-youtube {
         display: inline-block;
         vertical-align: middle;
-    }
-
-    button {
-        color: #fff;
-        background-color: #ff5a5a;
-        border-color: #ed4141;
-        padding: 7px;
-        border-radius: 10px;
     }
 }
 
@@ -161,55 +141,6 @@ input[type="checkbox"] {
         padding: 0 6px;
     }
 
-    table {
-        text-align:left;
-
-        td {
-            padding-top: 5px;
-            padding-bottom: 5px;
-            border-bottom: dashed 1px #dbdbdb;
-
-            * {
-                display: inline-block;
-                vertical-align: middle;
-            }
-
-            .selected_check {
-                margin-right: 0;
-            }
-
-            .clearable {
-                position: relative;
-
-                button {
-                    position: absolute;
-                    top: 0;
-                    right: -13px;
-                    opacity: 1;
-                    height: 100%;
-                    width: 22px;
-
-                    &:hover {
-                        color: #f52;
-                    }
-                }
-            }
-
-            .count {
-                position: relative;
-                left: 0.8rem;
-                top: 1px;
-                width: auto;
-                font-size: 0.9rem;
-                color: gray;
-            }
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-    }
-
     .data_field {
         padding-right: 13px; /* add space for the 'x' icon*/
     }
@@ -249,7 +180,7 @@ footer {
     }
 }
 
-button {
+/*button {
     display: inline-block;
     padding: 3px 6px;
     margin-bottom: 0;
@@ -269,7 +200,7 @@ button {
     background-image: none;
     border: 1px solid transparent;
     border-radius: 4px;
-}
+}*/
 
 .form-donate {
     display: inline-table;

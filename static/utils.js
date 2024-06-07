@@ -55,7 +55,7 @@ export function doReplaceInputs(inputs, searchRegex, replace) {
 		try {
 			input.value = input.value.replace(searchRegex, replaceAndCount);
 		} catch (e) {
-			console.error('Error in doReplaceInputs:', e);
+			console.warn('Failed in doReplaceInputs:', e);
 		}
 	}
 
@@ -93,7 +93,7 @@ export function doReplaceInIframe(iframe, searchRegex, replace, textInputFields,
 			], searchRegex, replace);
 		}
 	} catch (e) {
-		console.error('Error in doReplaceInIframe:', e);
+		console.warn('Failed in doReplaceInIframe:', e);
 	}
 
 	return count;
@@ -141,7 +141,7 @@ export function replaceTextWithElement(resultObj, elementNode, regexSearchValue,
 					let iframeDoc = child.contentDocument || child.contentWindow.document;
 					replaceTextWithElement(resultObj, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, webpage, color);
 				} catch (e) {
-					console.error('Cannot access iframe contents:', e);
+					console.warn('Cannot access iframe contents:', e);
 				}
 
 			} else {

@@ -21,6 +21,9 @@ export interface SearchConfig {
   textInputFields: boolean;
   webpage: boolean;
   html: boolean;
+
+  // to highlight all occurrences of the search term automatically
+  autoHighlight: boolean;
 }
 
 // --------- SVELTE STORAGE ----------
@@ -44,6 +47,7 @@ export const searchConfigState: Writable<SearchConfig> = writable({
   textInputFields: true,
   webpage: true,
   html: false,
+  autoHighlight: true,
 });
 
 // --------- CHROME STORAGE ----------
@@ -64,6 +68,8 @@ export async function initStorage() {
       webpage: true,
       // to search and replace in the whole webpage including HTML tags
       html: false,
+      // to highlight all occurrences of the search term automatically
+      autoHighlight: true,
     };
   } else {
     if (searchConfig.webpage === undefined) searchConfig.webpage = true;
