@@ -14,8 +14,10 @@
 	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		// INFO: using async/await doesn't work correctly in this case of listener function
 		if (message === 'searchAndReplaceInContentScript') {
+			console.log('searchAndReplaceInContentScript is called.');
 			doSearchAndReplace().then(sendResponse);
 		} else if (message === 'searchAndHighlightInContentScript') {
+			console.log('searchAndHighlightInContentScript is called.');
 			doSearchAndHighlight().then(sendResponse);
 		}
 

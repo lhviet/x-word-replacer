@@ -1,4 +1,5 @@
 <script lang='ts'>
+	import { getCurrentTab } from '$lib/chrome-helper/tab';
 	import { colorPalettes } from '$lib/colors';
 	import { appState, searchConfigState, searchReplaceState } from '$lib/stores';
 	import TransparentBtn from '$lib/components/TransparentBtn';
@@ -7,9 +8,9 @@
 	import { Button } from "$lib/components/ui/button";
 	import { Switch } from "$lib/components/ui/switch";
 	import * as Table from "$lib/components/ui/table";
-	import { Checkbox } from "$lib/components/ui/checkbox";
 	import { Input } from "$lib/components/ui/input";
 	import { SquarePlus, SquareX } from 'lucide-svelte';
+	import { Separator } from '$lib/components/ui/separator';
 
 
 	// Add new fields of Search & handleReplace
@@ -51,45 +52,50 @@
 		});
 	}
 
-	// TODO: improve the below with tabs.sendmessage
-	//   https://developer.chrome.com/docs/extensions/reference/api/runtime#method-sendMessage
-	// INFO: current/legacy/should be improved:
-	// Unfortunately, sending message directly from popup to ContentScript doesn't work
-	// So far, we need to send message to the serviceWorker.
-	// The serviceWorker, in turn, will message the ContentScript to manipulate the DOM
 	const onClickSearchAndReplace = async () => {
 		appState.update((state) => {
 			state.loading = true;
 			return state;
 		});
-		const result = await chrome.runtime.sendMessage('searchAndReplace');
-		searchReplaceState.update((state) => {
-			for (const field of state) {
-				const resultItem = result[field.search];
-				field['count'] = resultItem ?? 0;
-			}
-			state.sort((a, b) => b.active - a.active);
-			return state;
-		});
+
+		const tab = await getCurrentTab();
+		if (tab && tab.id) {
+			const result = await chrome.tabs.sendMessage(tab.id, 'searchAndReplaceInContentScript');
+			searchReplaceState.update((state) => {
+				for (const field of state) {
+					const resultItem = result[field.search];
+					field['count'] = resultItem ?? 0;
+				}
+				state.sort((a, b) => b.active - a.active);
+				return state;
+			});
+		}
+
 		appState.update((state) => {
 			state.loading = false;
 			return state;
 		});
 	}
+
 	const onClickSearchAndHighlight = async () => {
 		appState.update((state) => {
 			state.loading = true;
 			return state;
 		});
-		const result = await chrome.runtime.sendMessage('searchAndHighlight');
-		searchReplaceState.update((state) => {
-			for (const field of state) {
-				const resultItem = result[field.search];
-				field['count'] = resultItem ?? 0;
-			}
-			state.sort((a, b) => b.active - a.active);
-			return state;
-		});
+
+		const tab = await getCurrentTab();
+		if (tab && tab.id) {
+			const result = await chrome.tabs.sendMessage(tab.id, 'searchAndHighlightInContentScript');
+			searchReplaceState.update((state) => {
+				for (const field of state) {
+					const resultItem = result[field.search];
+					field['count'] = resultItem ?? 0;
+				}
+				state.sort((a, b) => b.active - a.active);
+				return state;
+			});
+		}
+
 		appState.update((state) => {
 			state.loading = false;
 			return state;
@@ -104,7 +110,8 @@
 
 </script>
 
-<div class='popup-header'>
+<!-- Hearder -->
+<div class='p-2 flex justify-between items-center'>
 	<img src='images/icon_48.png' />
 
 	{#if $appState.loading}
@@ -118,7 +125,11 @@
 		<Button on:click={onClickSearchAndReplace}>Replace</Button>
 	</div>
 </div>
-<div class='popup-body'>
+
+<Separator class="bg-slate-300" />
+
+<!-- Body -->
+<div class='popup-body max-h-[410px] overflow-y-scroll p-3 pr-0'>
 	<Table.Root>
 		<Table.Header>
 			<Table.Row>
@@ -127,7 +138,7 @@
 				<Table.Head class="text-slate-800 p-1">
 					Search and
 					<Switch class="h-auto align-middle data-[state=checked]:bg-slate-400" bind:checked={$searchConfigState.autoHighlight} /> auto
-					<Button class="bg-yellow-300 hover:bg-yellow-400 border-slate-600 border-[1px] text-primary px-2 py-1 h-auto ml-1" on:click={onClickSearchAndHighlight}>Highlight</Button>
+					<Button class="bg-yellow-300 hover:bg-yellow-400 border-slate-400 border-[1px] text-primary px-2 py-1 h-7 ml-1" on:click={onClickSearchAndHighlight}>Highlight</Button>
 				</Table.Head>
 				<Table.Head class="w-auto p-0"></Table.Head>
 				<Table.Head class="p-1">Replace by</Table.Head>
@@ -169,6 +180,8 @@
 	</Table.Root>
 </div>
 
+<Separator class="bg-slate-300" />
+
 <footer class="relative">
 	<table>
 		<tbody>
@@ -189,7 +202,9 @@
 									<input id='idIsRegexUsing' type='checkbox' class='mr-2' bind:checked={$searchConfigState.regex} />
 								</td>
 								<td>
-									<label for='idIsRegexUsing'><a target="_blank" href="https://viet.pughtml.com/posts/post-7-x-word-replacer-multi-highlight-with-regex">Use Regular Expression</a></label>
+									<label for='idIsRegexUsing'>
+										<a class="text-blue-700 underline" target="_blank" href="https://viet.pughtml.com/posts/post-7-x-word-replacer-multi-highlight-with-regex">Use Regular Expression</a>
+									</label>
 								</td>
 							</tr>
 							<tr>
