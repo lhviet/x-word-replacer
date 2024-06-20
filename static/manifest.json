@@ -1,7 +1,7 @@
 {
   "name": "X Word Replacer",
   "description": "Quickly replacing words in web pages",
-  "version": "1.0.6",
+  "version": "1.0.6.1",
   "manifest_version": 3,
   "permissions": [
     "storage"

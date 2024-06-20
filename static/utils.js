@@ -144,7 +144,7 @@ export function replaceTextWithElement(resultObj, elementNode, regexSearchValue,
 					console.warn('Cannot access iframe contents:', e);
 				}
 
-			} else {
+			} else if (child) {
 				// Recursively call the function on child elements
 				replaceTextWithElement(resultObj, child, regexSearchValue, replaceValue, searchTextInputs, webpage, color);
 			}
@@ -159,18 +159,31 @@ export function replaceTextWithElement(resultObj, elementNode, regexSearchValue,
 				const parts = text.split(regexSearchValue);
 				const matches = text.match(regexSearchValue) || [];
 
+				// Check if this whole text node (parent) matches the search value and the (parent) node is highlighted already
+				if (
+					matches.length === 1 && matches[0] === text
+					&& child.parentElement.classList.contains('xword-search-n-highlight')
+				) {
+					continue;
+				}
+
 				// Iterate through the parts and matches to create new elements
 				for (let i = 0; i < parts.length; i++) {
 					const partText = parts[i];
-					if (partText) {
-						elementNode.insertBefore(document.createTextNode(partText), child);
+					try {
+						if (partText) {
+							elementNode.insertBefore(document.createTextNode(partText), child);
+						}
+						if (i < matches.length) {
+							// append the replaceElement if this part of text is not the last one
+							resultObj.count++;
+							const replaceStr = getColorHTMLElement(color, resultObj.count, matches[i], replaceValue);
+							const replaceElement = htmlToElement(replaceStr);
+							elementNode.insertBefore(replaceElement.cloneNode(true), child);
+						}
 					}
-					if (i < matches.length) {
-						// append the replaceElement if this part of text is not the last one
-						resultObj.count++;
-						const replaceStr = getColorHTMLElement(color, resultObj.count, matches[i], replaceValue);
-						const replaceElement = htmlToElement(replaceStr);
-						elementNode.insertBefore(replaceElement.cloneNode(true), child);
+					catch (e) {
+						console.warn('Failed to replace text with element:', e);
 					}
 				}
 				child.remove(); // Remove the original text node
@@ -181,4 +194,29 @@ export function replaceTextWithElement(resultObj, elementNode, regexSearchValue,
 			}
 		}
 	}
+}
+
+export function throttle(func, limit) {
+	let lastFunc;
+	let lastRan;
+
+	return function(...args) {
+		const context = this;
+
+		if (!lastRan) {
+			func.apply(context, args);
+			lastRan = Date.now();
+		} else {
+			if (lastFunc) {
+				clearTimeout(lastFunc);
+			}
+
+			lastFunc = setTimeout(function() {
+				if ((Date.now() - lastRan) >= limit) {
+					func.apply(context, args);
+					lastRan = Date.now();
+				}
+			}, limit - (Date.now() - lastRan));
+		}
+	};
 }

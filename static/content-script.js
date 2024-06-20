@@ -14,10 +14,10 @@
 	chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 		// INFO: using async/await doesn't work correctly in this case of listener function
 		if (message === 'searchAndReplaceInContentScript') {
-			console.log('searchAndReplaceInContentScript is called.');
+			// console.log('searchAndReplaceInContentScript is called.');
 			doSearchAndReplace().then(sendResponse);
 		} else if (message === 'searchAndHighlightInContentScript') {
-			console.log('searchAndHighlightInContentScript is called.');
+			// console.log('searchAndHighlightInContentScript is called.');
 			doSearchAndHighlight().then(sendResponse);
 		}
 
@@ -33,33 +33,6 @@
 		// Create an array of promises for parallel execution
 		const promises = activeItems.map(async item => {
 			const replacementCount = await searchAndReplace(item, searchConfig);
-			return { search: item.search, replacementCount };
-		});
-
-		// Await all promises to resolve
-		const results = await Promise.all(promises);
-
-		// Construct the result object
-		results.forEach(({ search, replacementCount }) => {
-			result[search] = replacementCount;
-		});
-
-		return result;
-	}
-
-	async function doSearchAndHighlight() {
-		const result = {};
-
-		const { activeItems, searchConfig } = await utils.getActiveSearchReplaceItems();
-
-		// Create an array of promises
-		const promises = activeItems.map(async item => {
-			const color = {
-				backgroundColor: item.backgroundColor,
-				textColor: item.textColor,
-			};
-
-			const replacementCount = await searchAndReplace(item, searchConfig, color);
 			return { search: item.search, replacementCount };
 		});
 
@@ -129,21 +102,53 @@
 		return result.count;
 	}
 
-	// when page is loaded
-	if (document.readyState === 'complete') {
-		doSearchAndHighlight();
-	}
-	else {
-		document.onreadystatechange = async function () {
-			if (document.readyState === "complete") {
-				const { searchConfig } = await utils.getActiveSearchReplaceItems();
-				const { autoHighlight } = searchConfig;
-				if (autoHighlight) {
-					console.info('Auto-highlighting...');
-					doSearchAndHighlight();
-				}
-			}
-		}
-	}
-})();
+	async function doSearchAndHighlight(observer = undefined) {
+		const result = {};
 
+		const { activeItems, searchConfig } = await utils.getActiveSearchReplaceItems();
+
+		// Create an array of promises
+		const promises = activeItems.map(async item => {
+			const color = {
+				backgroundColor: item.backgroundColor,
+				textColor: item.textColor,
+			};
+
+			const replacementCount = await searchAndReplace(item, searchConfig, color);
+			return { search: item.search, replacementCount };
+		});
+
+		// Await all promises to resolve
+		const results = await Promise.all(promises);
+
+		// Construct the result object
+		results.forEach(({ search, replacementCount }) => {
+			result[search] = replacementCount;
+		});
+
+		if (observer) {
+			observer.observe(document.body, { childList: true, subtree: true });
+		}
+		return result;
+	}
+
+	const throttledSearchReplace = utils.throttle(doSearchAndHighlight, 500);
+
+	async function continuousHighlight() {
+		// INFO: we don't monitor the network request because DOM observer seems good enough for this use case
+		const observer = new MutationObserver(() => {
+			observer.disconnect();  // Temporarily disconnect the observer to avoid infinite loop
+			throttledSearchReplace(observer);
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
+
+		window.addEventListener('load', throttledSearchReplace);
+		document.addEventListener('DOMContentLoaded', throttledSearchReplace);
+	}
+
+	const { searchConfig } = await utils.getActiveSearchReplaceItems();
+	if (searchConfig?.autoHighlight) {
+		continuousHighlight();
+	}
+
+})();
