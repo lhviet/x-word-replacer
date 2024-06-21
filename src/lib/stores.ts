@@ -1,6 +1,5 @@
 import { type Writable, writable } from "svelte/store";
-import { browser } from '$app/environment';
-import { colorPalettes } from "./colors";
+import { colorPalettes } from "$lib/colors";
 
 export interface AppState {
   loading: boolean;
@@ -51,9 +50,6 @@ export const searchConfigState: Writable<SearchConfig> = writable({
 });
 
 // --------- CHROME STORAGE ----------
-if (browser) {
-  initStorage();
-}
 export async function initStorage() {
   let { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
 
@@ -103,6 +99,8 @@ export async function initStorage() {
   // After loading the data, start auto-saving for any changes from now on
   startAutoSaving();
 }
+
+initStorage();
 
 // --------- SVELTE CHROME STORAGE SYNCHRONIZATION ----------
 export interface SyncStore {

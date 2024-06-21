@@ -45,4 +45,4 @@ async function removeInlineScript(directory) {
     });
 }
 
-removeInlineScript(path.resolve(__dirname, 'build'));
+removeInlineScript(path.resolve(__dirname, 'dist'));

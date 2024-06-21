@@ -1,18 +1,9 @@
-export const getActiveSearchReplaceItems = async () => {
-	const { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
-
-	// prepare search and replace data
-	const activeItems = searchReplace.filter(item => item.active && item.search.length > 0);
-
-	return { activeItems, searchConfig };
-}
-
 // Helper function to escape special characters in a string for regex
 // Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
 // INFO: this function is used when we want to convert a normal string, that may contain
 // special characters, i.e., dot `.`, into a regex string. In that case, to keep the dot as a dot,
 // we need to escape it. I.e., `.` -> `\.`
-export const RegExEscape = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export const RegExEscape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Helper function to test if a string is a valid regex
 export function isValidRegex(searchText) {

@@ -3,8 +3,8 @@
 ![Logic](diagrams/x-word-replacer.drawio.svg)
 
 To structure the content scripts source code, there are two script files are used:
-* `content.js` - This script is defined in the manifest file and is executed when the extension is activated. This script is responsible for injecting the `content-script.js` into the active tab.
-* `utils.js` - this script is defined as a resource in the manifest file, for dynamic loading in the `content-script.js` script.
+* `content.js` - This script is defined in the manifest file and is executed when the extension is activated. This script is responsible for injecting the `content-script.ts` into the active tab.
+* `utils.js` - this script is defined as a resource in the manifest file, for dynamic loading in the `content-script.ts` script.
 
 ```
 "web_accessible_resources": [{

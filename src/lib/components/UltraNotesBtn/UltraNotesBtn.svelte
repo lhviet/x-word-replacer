@@ -7,7 +7,7 @@
    href='https://chrome.google.com/webstore/detail/ultra-notes/ngfhnakbmjknpcepkeiilllocgbdfehi'
    target='_blank'>
     <span>Ultra Notes</span>
-    <img src='images/ultra-notes.png' alt='Ultra Notes' width='20px' height='20px'/>
+    <img src={chrome.runtime.getURL('static/images/ultra-notes.png')} alt='Ultra Notes' width='20px' height='20px'/>
 </a>
 
 <style>
