@@ -3,6 +3,8 @@
 // INFO: this function is used when we want to convert a normal string, that may contain
 // special characters, i.e., dot `.`, into a regex string. In that case, to keep the dot as a dot,
 // we need to escape it. I.e., `.` -> `\.`
+import type { SearchConfig, SearchReplace } from '$lib/stores';
+
 export const RegExEscape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Helper function to test if a string is a valid regex
@@ -23,16 +25,7 @@ export const getColorHTMLElement = (highlightColor, count, searchValue, replaceV
 	}
 	const { backgroundColor , textColor } = highlightColor;
 
-	return `<span class="xword-search-n-highlight" style="background-color: ${backgroundColor}; color: ${textColor}">${searchValue}<span  class='x-word-count'>${count}</span></span>`;
-}
-
-// Helper function to convert HTML string to DOM element
-export function htmlToElement(html) {
-	const template = document.createElement('template');
-	html = html.trim(); // Never return a text node of whitespace as the result
-	template.innerHTML = html;
-
-	return template.content.firstChild;
+	return `<xword class="xword-search-n-highlight" style="background-color: ${backgroundColor}; color: ${textColor}">${searchValue}<span class='x-word-count'>${count}</span></xword>`;
 }
 
 export function doReplaceInputs(inputs, searchRegex, replace) {
@@ -90,6 +83,25 @@ export function doReplaceInIframe(iframe, searchRegex, replace, textInputFields,
 	return count;
 }
 
+function getAllMatchesIndexes(regex, str) {
+	const matches = [];
+	let match;
+
+	while ((match = regex.exec(str)) !== null) {
+		matches.push({
+			start: match.index,
+			end: match.index + match[0].length
+		});
+
+		// Prevent infinite loop for zero-length matches
+		if (regex.lastIndex === match.index) {
+			regex.lastIndex++;
+		}
+	}
+
+	return matches;
+}
+
 /**
  * INFO: a DOM element can be an element node, a text node, or an attribute node,
  * i.e., h1Elem = <h1>Research Overview</h1> has a Text node "overview", if we check h1Elem.childNodes[0].nodeType it will return 3
@@ -102,11 +114,9 @@ export function doReplaceInIframe(iframe, searchRegex, replace, textInputFields,
  * let element = document.getElementById('plugins-overview');
  * replaceTextWithElement(element, 'Overview', 'span');
  */
-export function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replaceValue, searchTextInputs, webpage, color = undefined) {
+export function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replaceValue, searchTextInputs, webpage) {
 	// Iterate through all child nodes of the element and search or replace text with the given regex searchValue
-
-	// if color is provided, it means users want to highlight text, and highlighting doesn't apply to input fields
-	const shouldProcessInputs = searchTextInputs && !color;
+	const shouldProcessInputs = searchTextInputs;
 
 	// INFO: we should use Array.from to convert NodeList to Array to avoid the live NodeList
 	// It means that if we update/remove a child from the NodeList, the NodeList will be updated.
@@ -116,8 +126,9 @@ export function replaceTextWithElement(resultObj, elementNode, regexSearchValue,
 		const child = childrenNodes[i];
 
 		if (child.nodeType === Node.ELEMENT_NODE) {
-			// Handle input and textarea elements
 			const tagName = child.tagName.toLowerCase();
+
+			// Handle input and textarea elements
 			if (tagName === 'input' || tagName === 'textarea') {
 				if (!shouldProcessInputs) {
 					// Do nothing if users want to highlight the text (search), instead of replace it
@@ -127,63 +138,153 @@ export function replaceTextWithElement(resultObj, elementNode, regexSearchValue,
 				// TODO: Handle input and textarea elements with highlight (search results to be shown to users against a regex/search)
 			}
 			// Update iframe elements
-			else if (child.tagName.toLowerCase() === 'iframe') {
+			else if (tagName === 'iframe') {
 				try {
 					let iframeDoc = child.contentDocument || child.contentWindow.document;
-					replaceTextWithElement(resultObj, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, webpage, color);
+					replaceTextWithElement(resultObj, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, webpage);
 				} catch (e) {
 					console.warn('Cannot access iframe contents:', e);
 				}
 
-			} else if (child) {
+			} else if (tagName !== 'canvas') {
 				// Recursively call the function on child elements
-				replaceTextWithElement(resultObj, child, regexSearchValue, replaceValue, searchTextInputs, webpage, color);
+				replaceTextWithElement(resultObj, child, regexSearchValue, replaceValue, searchTextInputs, webpage);
 			}
 		}
 		else if (webpage && child.nodeType === Node.TEXT_NODE) {
 			const text = child.nodeValue;
+			// Replace with plain text
+			child.nodeValue = text.replace(regexSearchValue, replaceValue);
+		}
+	}
+}
 
-			if (color) {  // Replace with HTML element
-				// Split text into parts based on the search regex
-				// i.e., this text = 'an object with output generation such an object.'
-				// can be splited into 4 parts of 3 matches with this regex = /\bo\w{5}\b/gi
-				const parts = text.split(regexSearchValue);
-				const matches = text.match(regexSearchValue) || [];
+export const getSearchRegex = (searchValue, searchConfig: SearchConfig) => {
+	const flag = searchConfig.matchCase ? 'g' : 'gi';
 
-				// Check if this whole text node (parent) matches the search value and the (parent) node is highlighted already
-				if (
-					matches.length === 1 && matches[0] === text
-					&& child.parentElement.classList.contains('xword-search-n-highlight')
-				) {
-					continue;
+	// INFO: if we use regex, we should not escape the regex, because users may want to use regex
+	// But if we use normal text, we should escape it to avoid special characters in the text, i.e., dot `.`
+	//   and use the escaped text as a regex, i.e., `.` -> `\.`
+	const regexStr = searchConfig.regex ? searchValue : RegExEscape(searchValue);
+	if (!isValidRegex(regexStr)) {
+		return null;
+	}
+
+	return new RegExp(regexStr, flag);
+}
+
+export const getItemColor = (item: SearchReplace) => ({
+	backgroundColor: item.backgroundColor,
+	textColor: item.textColor,
+});
+
+export function highlightWithCanvas(
+	resultObj: object,
+	elementNode: HTMLElement,
+	activeItems: SearchReplace[],
+	searchConfig: SearchConfig,
+) {
+	// Iterate through all child nodes of the element and search or replace text with the given regex searchValue
+	// if color is provided, it means users want to highlight text, and highlighting doesn't apply to input fields
+	// INFO: we should use Array.from to convert NodeList to Array to avoid the live NodeList
+	// It means that if we update/remove a child from the NodeList, the NodeList will be updated.
+	const childrenNodes = Array.from(elementNode.childNodes);
+
+	const canvasDrawingRects = [];
+
+	for (let i = 0; i < childrenNodes.length; i++) {
+		if (childrenNodes[i].nodeType === Node.ELEMENT_NODE) {
+			const child = childrenNodes[i] as HTMLElement;
+			const tagName = child.tagName.toLowerCase();
+
+			// Handle input and textarea elements
+			if (tagName === 'input' || tagName === 'textarea') {
+				// Do nothing if users want to highlight the text (search), instead of replace it
+				continue;
+				// TODO: Handle input and textarea elements with highlight (search results to be shown to users against a regex/search)
+			}
+			// Update iframe elements
+			else if (tagName === 'iframe') {
+				const iFrameElement = childrenNodes[i] as HTMLIFrameElement;
+				try {
+					const iframeDoc = iFrameElement.contentDocument || iFrameElement.contentWindow?.document;
+					if (iframeDoc?.body) {
+						highlightWithCanvas(resultObj, iframeDoc.body, activeItems, searchConfig);
+					}
+				} catch (e) {
+					console.warn('Cannot access iframe contents:', e);
 				}
 
-				// Iterate through the parts and matches to create new elements
-				for (let i = 0; i < parts.length; i++) {
-					const partText = parts[i];
-					try {
-						if (partText) {
-							elementNode.insertBefore(document.createTextNode(partText), child);
-						}
-						if (i < matches.length) {
-							// append the replaceElement if this part of text is not the last one
-							resultObj.count++;
-							const replaceStr = getColorHTMLElement(color, resultObj.count, matches[i], replaceValue);
-							const replaceElement = htmlToElement(replaceStr);
-							elementNode.insertBefore(replaceElement.cloneNode(true), child);
-						}
-					}
-					catch (e) {
-						console.warn('Failed to replace text with element:', e);
-					}
-				}
-				child.remove(); // Remove the original text node
-
-			} else {
-				// Replace with plain text
-				child.nodeValue = text.replace(regexSearchValue, replaceValue);
+			} else if (tagName !== 'canvas') {
+				// Recursively call the function on child elements
+				highlightWithCanvas(resultObj, child, activeItems, searchConfig);
 			}
 		}
+		else if (childrenNodes[i].nodeType === Node.TEXT_NODE) {
+			const child = childrenNodes[i] as Text;
+			const text = child.nodeValue;
+
+			for (const item of activeItems) {
+				const searchRegex = getSearchRegex(item.search, searchConfig);
+
+				// Highlight the matches with canvas solution
+				const matches = getAllMatchesIndexes(searchRegex, text);
+				resultObj[item.search] = (resultObj[item.search] || 0) + matches.length;
+
+				if (matches.length > 0) {
+					// Calculate the relative position of the text node to the container and store the rectangle for drawing later
+					const containerRect = elementNode.getBoundingClientRect();
+					for (const match of matches) {
+						const rect = getHighlightRectangle(child, match.start, match.end);
+						const relativeX = rect.left - containerRect.left;
+						const relativeY = rect.top - containerRect.top;
+						canvasDrawingRects.push({
+							x: relativeX,
+							y: relativeY,
+							width: rect.width,
+							height: rect.height,
+							backgroundColor: item.backgroundColor,
+						});
+					}
+				}
+			}
+		}
+	}
+
+	// If drawing highlights
+	if (canvasDrawingRects.length > 0) {
+		// Clear canvas if it exists
+		const canvas = findContainerCanvas(elementNode);
+		if (canvas) {
+			clearCanvas(canvas);
+			/*canvas.addEventListener('mousemove', (e) => {
+				const rect = canvas.getBoundingClientRect();
+				const mouseX = e.clientX - rect.left;
+				const mouseY = e.clientY - rect.top;
+
+				let hover = false;
+				clearCanvas(canvas);
+				const ctx = canvas.getContext('2d');
+				console.log('canvasDrawingRects', canvasDrawingRects);
+				canvasDrawingRects.forEach(shape => {
+					if (isMouseOverShape(mouseX, mouseY, shape)) {
+						hover = true;
+						ctx.globalAlpha = 1;
+					} else {
+						ctx.globalAlpha = 0.5;
+					}
+					console.log('Drawing shape:', shape);
+					ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+				});
+
+				if (!hover) {
+					// (re-)Draw highlights on the canvas
+					drawHighlightRectOnCanvas(elementNode, canvasDrawingRects, color.backgroundColor, 0.8);
+				}
+			});*/
+		}
+		// (re-)Draw highlights on the canvas
+		drawHighlightRectOnCanvas(elementNode, canvasDrawingRects, 0.8);
 	}
 }
 
@@ -210,4 +311,118 @@ export function throttle(func, limit) {
 			}, limit - (Date.now() - lastRan));
 		}
 	};
+}
+
+// Canvas solution
+function adjustContainerPositionZIndex(element: HTMLElement) {
+	const position = window.getComputedStyle(element).position;
+	if (position === 'static') {
+		element.style.position = 'relative';
+	}
+
+	const zIndex = window.getComputedStyle(element).zIndex;
+	if (zIndex === 'auto') {
+		element.style.zIndex = '1';
+	}
+}
+
+function findContainerCanvas(container: HTMLElement) {
+	const canvasElems = container.getElementsByClassName('xword-highlight-canvas');
+	if (canvasElems.length > 0) {
+		return canvasElems[0] as HTMLCanvasElement;
+	}
+
+	return null;
+}
+
+const clearCanvas = (canvas: HTMLCanvasElement) => {
+	// canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function getOrCreateHighlightCanvas(container: HTMLElement) {
+	// TODO: Check if the canvas already exists
+	let canvas = findContainerCanvas(container);
+	if (!canvas) {
+		// Adjust the container's position and z-index
+		adjustContainerPositionZIndex(container);
+
+		canvas = document.createElement('canvas');
+		canvas.classList.add('xword-highlight-canvas');
+		container.appendChild(canvas);
+	}
+
+	const containerRect = container.getBoundingClientRect();
+	canvas.width = containerRect.width;
+	canvas.height = containerRect.height;
+
+	return canvas;
+}
+
+export function getHighlightRectangle(textNode: Text, startIndex: number, endIndex: number) {
+	const range = document.createRange();
+	range.setStart(textNode, startIndex);
+	range.setEnd(textNode, endIndex);
+
+	// Get the bounding rectangle of the range
+	return range.getBoundingClientRect();
+}
+
+const throttledMouseMove = throttle((e, canvas, shapes, backgroundColor, alpha) => {
+	const rect = canvas.getBoundingClientRect();
+	const mouseX = e.clientX - rect.left;
+	const mouseY = e.clientY - rect.top;
+	const ctx = canvas.getContext('2d');
+	ctx.globalAlpha = alpha;
+
+	shapes.forEach(shape => {
+		if (isMouseOverShape(mouseX, mouseY, shape)) {
+			ctx.fillStyle = 'red';
+		} else {
+			ctx.fillStyle = backgroundColor;
+		}
+		// ctx.clearRect(shape.x, shape.y, shape.width, shape.height);
+		ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+	});
+
+}, 100);
+
+export function drawHighlightRectOnCanvas(
+	container: HTMLElement,
+	canvasDrawingRects: any[],
+	alpha = 0.5,
+) {
+	// Create a canvas element to draw highlights associating with the parent node
+	const canvas = getOrCreateHighlightCanvas(container);
+	/*if (container.innerText === 'Displays a button or a component that looks like a button.') {
+		console.log(canvas, 'drawHighlightRectOnCanvas', `
+		const ctx = canvas.getContext('2d');
+		ctx.fillStyle = '${backgroundColor}';
+		ctx.globalAlpha = ${alpha};
+		
+		${canvasDrawingRects.map(shape => `ctx.fillRect(${shape.x}, ${shape.y}, ${shape.width}, ${shape.height});`)}
+		`.replaceAll('\t', ' ').replaceAll('\n', ' '));
+	}*/
+	/*container.addEventListener('mousemove', (e) => {
+		throttledMouseMove(e, canvas, canvasDrawingRects, backgroundColor, alpha)
+	});*/
+
+	// Draw matching highlights on the canvas
+	const ctx = canvas.getContext('2d');
+	ctx.globalAlpha = alpha;
+
+	for (const shape of canvasDrawingRects) {
+		ctx.fillStyle = shape.backgroundColor;
+		ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+	}
+	/*if (container.innerText === 'Displays a button or a component that looks like a button.') {
+		console.log('drawn');
+		if (backgroundColor !== '#FCF2C8') ctx.restore();
+		else ctx.save();
+	}*/
+}
+
+// Function to check if the mouse is over a shape
+function isMouseOverShape(mouseX, mouseY, shape) {
+	return mouseX > shape.x && mouseX < shape.x + shape.width &&
+		mouseY > shape.y && mouseY < shape.y + shape.height;
 }
