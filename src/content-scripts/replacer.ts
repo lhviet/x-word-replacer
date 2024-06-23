@@ -126,6 +126,7 @@ export async function doSearchAndReplace() {
 }
 
 export async function doSearchAndHighlight(observer?: MutationObserver) {
+	// console.log('doSearchAndHighlight is called.');
 	observer?.disconnect();  // Temporarily disconnect the observer to avoid infinite loop
 
 	// INFO: Remove the existing highlighting canvas if it exists, to redraw the highlights freshly
@@ -143,8 +144,59 @@ export async function doSearchAndHighlight(observer?: MutationObserver) {
 	return result;
 }
 
-// Continuous highlighting
-const throttledSearchReplace = utils.throttle(doSearchAndHighlight, 600);
+// Continuous highlighting ------------------------------
+
+// INFO: Initial Throttle Limit: Start with a throttle limit of 600ms.
+// Periodic Check: Every 5 seconds, check if the function has been called more than 3 times.
+// Increase Throttle: If the function is called more than 3 times in 5 seconds, increase the throttle limit to FIVE_SECONDS.
+// Reset Throttle: After 30 seconds from increasing the throttle limit, reset it back to 600ms and continue the checking process.
+const FIVE_SECONDS = 9000;
+const THIRTY_SECONDS = 30000;
+let callTimestamps: number[] = [];
+let throttleLimit = 600;
+let isThrottled = false;
+let increaseThrottleTimeout;
+let resetThrottleTimeout;
+
+function checkCallFrequency() {
+	// Remove timestamps older than 5 seconds
+	callTimestamps = callTimestamps.filter(timestamp => Date.now() - timestamp <= 5000);
+
+	// Check if there have been more than 3 calls in the last 5 seconds
+	if (callTimestamps.length > 3 && !isThrottled) {
+		// Increase the throttle limit to FIVE_SECONDS
+		throttleLimit = FIVE_SECONDS;
+		isThrottled = true;
+		throttledSearchReplace = setupThrottledHighlight(throttleLimit);
+		// console.log("Throttle limit increased to FIVE_SECONDS");
+
+		// Reset the throttle limit to 600 ms after 2 minutes
+		resetThrottleTimeout = setTimeout(() => {
+			throttleLimit = 600;
+			isThrottled = false;
+			throttledSearchReplace = setupThrottledHighlight(throttleLimit);
+			// console.log("Throttle limit reset to 600 ms");
+		}, THIRTY_SECONDS);
+	}
+
+	// Schedule the next check in 5 seconds
+	increaseThrottleTimeout = setTimeout(checkCallFrequency, 5000);
+}
+
+// Throttle the doSearchAndHighlight function
+function setupThrottledHighlight(milliseconds: number) {
+	return utils.throttle((observer?: MutationObserver) => {
+		const now = Date.now();
+		// Add current timestamp
+		callTimestamps.push(now);
+
+		doSearchAndHighlight(observer);
+	}, milliseconds);
+}
+let throttledSearchReplace = setupThrottledHighlight(throttleLimit);
+
+// Start the periodic check
+checkCallFrequency();
 
 const startObserving = (observer?: MutationObserver) => observer?.observe(document.body, {
 	attributes: true,	// Monitor attribute changes in Element, i.e., display style, position, etc.
@@ -154,11 +206,13 @@ const startObserving = (observer?: MutationObserver) => observer?.observe(docume
 });
 
 export async function continuousHighlight() {
+	// console.log('Continuous highlighting is enabled.');
 	window.addEventListener('load', () => throttledSearchReplace());
 	document.addEventListener('DOMContentLoaded', () => throttledSearchReplace());
 
 	// INFO: we don't monitor the network request because DOM observer seems good enough for this use case
 	const observer = new MutationObserver(() => {
+		// console.log('DOM mutation detected.');
 		throttledSearchReplace(observer);
 	});
 	startObserving(observer);
