@@ -18,7 +18,7 @@ export default defineManifest(async (env) => ({
 			matches: ['<all_urls>'],
 			js: [
 				'src/content-scripts/content-script.ts',
-				// "src/main.ts",
+				"src/main.ts",
 			]
 		}
 	],

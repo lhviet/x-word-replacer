@@ -147,11 +147,13 @@ export async function doSearchAndHighlight(observer?: MutationObserver) {
 // Continuous highlighting ------------------------------
 
 // INFO: Initial Throttle Limit: Start with a throttle limit of 600ms.
-// Periodic Check: Every 5 seconds, check if the function has been called more than 3 times.
+// Periodic Check: Every 6 seconds, check if the function has been called more than 8 times.
 // Increase Throttle: If the function is called more than 3 times in 5 seconds, increase the throttle limit to FIVE_SECONDS.
 // Reset Throttle: After 30 seconds from increasing the throttle limit, reset it back to 600ms and continue the checking process.
-const FIVE_SECONDS = 9000;
+const FIVE_SECONDS = 5000;
+const SIX_SECONDS = 6000;
 const THIRTY_SECONDS = 30000;
+const CALL_LIMIT = 8;
 let callTimestamps: number[] = [];
 let throttleLimit = 600;
 let isThrottled = false;
@@ -159,18 +161,18 @@ let increaseThrottleTimeout;
 let resetThrottleTimeout;
 
 function checkCallFrequency() {
-	// Remove timestamps older than 5 seconds
-	callTimestamps = callTimestamps.filter(timestamp => Date.now() - timestamp <= 5000);
+	// Remove timestamps older than SIX_SECONDS
+	callTimestamps = callTimestamps.filter(timestamp => Date.now() - timestamp <= SIX_SECONDS);
 
-	// Check if there have been more than 3 calls in the last 5 seconds
-	if (callTimestamps.length > 3 && !isThrottled) {
+	// Check if there have been more than CALL_LIMIT calls in the last SIX_SECONDS
+	if (callTimestamps.length > CALL_LIMIT && !isThrottled) {
 		// Increase the throttle limit to FIVE_SECONDS
 		throttleLimit = FIVE_SECONDS;
 		isThrottled = true;
 		throttledSearchReplace = setupThrottledHighlight(throttleLimit);
 		// console.log("Throttle limit increased to FIVE_SECONDS");
 
-		// Reset the throttle limit to 600 ms after 2 minutes
+		// Reset the throttle limit to 600 ms after THIRTY_SECONDS
 		resetThrottleTimeout = setTimeout(() => {
 			throttleLimit = 600;
 			isThrottled = false;
@@ -179,8 +181,8 @@ function checkCallFrequency() {
 		}, THIRTY_SECONDS);
 	}
 
-	// Schedule the next check in 5 seconds
-	increaseThrottleTimeout = setTimeout(checkCallFrequency, 5000);
+	// Schedule the next check in SIX_SECONDS
+	increaseThrottleTimeout = setTimeout(checkCallFrequency, SIX_SECONDS);
 }
 
 // Throttle the doSearchAndHighlight function
