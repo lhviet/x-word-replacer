@@ -18,7 +18,8 @@ export default defineManifest(async (env) => ({
 			matches: ['<all_urls>'],
 			js: [
 				'src/content-scripts/content-script.ts',
-				"src/main.ts",
+				"src/content-scripts/web-injection.ts",
+				// "src/content-scripts/webpage.ts",
 			]
 		}
 	],

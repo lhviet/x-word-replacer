@@ -178,6 +178,7 @@ export const getItemColor = (item: SearchReplace) => ({
 	textColor: item.textColor,
 });
 
+const HIGHLIGHT_ALPHA = 1;
 export function highlightWithCanvas(
 	resultObj: object,
 	elementNode: HTMLElement,
@@ -284,7 +285,7 @@ export function highlightWithCanvas(
 			});*/
 		}
 		// (re-)Draw highlights on the canvas
-		drawHighlightRectOnCanvas(elementNode, canvasDrawingRects, 0.8);
+		drawHighlightRectOnCanvas(elementNode, canvasDrawingRects, HIGHLIGHT_ALPHA);
 	}
 }
 
