@@ -4,6 +4,7 @@
 // special characters, i.e., dot `.`, into a regex string. In that case, to keep the dot as a dot,
 // we need to escape it. I.e., `.` -> `\.`
 import type { SearchConfig, SearchReplace } from '$lib/stores';
+import { throttle } from '$utils/throttle';
 
 export const RegExEscape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -287,31 +288,6 @@ export function highlightWithCanvas(
 		// (re-)Draw highlights on the canvas
 		drawHighlightRectOnCanvas(elementNode, canvasDrawingRects, HIGHLIGHT_ALPHA);
 	}
-}
-
-export function throttle(func, limit) {
-	let lastFunc;
-	let lastRan;
-
-	return function(...args) {
-		const context = this;
-
-		if (!lastRan) {
-			func.apply(context, args);
-			lastRan = Date.now();
-		} else {
-			if (lastFunc) {
-				clearTimeout(lastFunc);
-			}
-
-			lastFunc = setTimeout(function() {
-				if ((Date.now() - lastRan) >= limit) {
-					func.apply(context, args);
-					lastRan = Date.now();
-				}
-			}, limit - (Date.now() - lastRan));
-		}
-	};
 }
 
 // Canvas solution

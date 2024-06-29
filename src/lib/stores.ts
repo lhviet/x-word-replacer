@@ -3,6 +3,11 @@ import { colorPalettes } from "$lib/colors";
 
 export interface AppState {
   loading: boolean;
+  isPanelOpen: boolean;
+}
+
+export interface LocalAppState {
+  floatingBtn: boolean;
 }
 
 export interface SearchReplace {
@@ -29,7 +34,13 @@ export interface SearchConfig {
 
 export const appState: Writable<AppState> = writable({
   loading: false,
+  isPanelOpen: false,
 });
+
+export const localAppState: Writable<LocalAppState> = writable({
+  floatingBtn: true,
+});
+
 export const searchReplaceState: Writable<SearchReplace[]> = writable([
   {
     active: true,
@@ -51,6 +62,14 @@ export const searchConfigState: Writable<SearchConfig> = writable({
 
 // --------- CHROME STORAGE ----------
 export async function initStorage() {
+  let { localAppConfig } = await chrome.storage.local.get(['localAppConfig']);
+  if (localAppConfig?.floatingBtn === undefined) {
+    localAppConfig = {
+      floatingBtn: true,
+    };
+  }
+  localAppState.set(localAppConfig);
+
   let { searchReplace, searchConfig } = await chrome.storage.sync.get(['searchReplace', 'searchConfig']);
 
   if (!searchReplace) searchReplace = [];
@@ -103,15 +122,24 @@ export async function initStorage() {
 initStorage();
 
 // --------- SVELTE CHROME STORAGE SYNCHRONIZATION ----------
+export interface LocalStore {
+  localAppConfig: LocalAppState;
+}
+
 export interface SyncStore {
   searchReplace: SearchReplace[];
   searchConfig: SearchConfig;
 }
 
 function startAutoSaving() {
+  localAppState.subscribe(async (localAppConfig) => {
+    await chrome.storage.local.set({ localAppConfig });
+  });
+
   searchConfigState.subscribe(async (searchConfig) => {
     await chrome.storage.sync.set({ searchConfig });
   })
+
   searchReplaceState.subscribe(async (searchReplace) => {
     // Auto remove item that has empty fields in search and replace
     const filteredSearchReplace = searchReplace.filter((item) => item.search !== '' || item.replace !== '');

@@ -1,5 +1,6 @@
 import * as utils from './utils';
 import type { SearchConfig, SearchReplace } from '$lib/stores';
+import { throttle } from '$utils/throttle';
 
 function searchAndReplace(item, searchConfig) {
 	const { textInputFields, webpage, regex, matchCase, html } = searchConfig;
@@ -187,7 +188,7 @@ function checkCallFrequency() {
 
 // Throttle the doSearchAndHighlight function
 function setupThrottledHighlight(milliseconds: number) {
-	return utils.throttle((observer?: MutationObserver) => {
+	return throttle((observer?: MutationObserver) => {
 		const now = Date.now();
 		// Add current timestamp
 		callTimestamps.push(now);
@@ -200,12 +201,14 @@ let throttledSearchReplace = setupThrottledHighlight(throttleLimit);
 // Start the periodic check
 checkCallFrequency();
 
-const startObserving = (observer?: MutationObserver) => observer?.observe(document.body, {
-	attributes: true,	// Monitor attribute changes in Element, i.e., display style, position, etc.
-	childList: true,	// Monitor child changes in Element, i.e., adding or removing child nodes
-	subtree: true,	// Monitor all descendants of the target node
-	characterData: true,	// Monitor text changes in TextNode
-});
+const startObserving = (observer?: MutationObserver) => {
+	observer?.observe(document.body, {
+		attributes: true,	// Monitor attribute changes in Element, i.e., display style, position, etc.
+		childList: true,	// Monitor child changes in Element, i.e., adding or removing child nodes
+		subtree: true,	// Monitor all descendants of the target node
+		characterData: true,	// Monitor text changes in TextNode
+	});
+}
 
 export async function continuousHighlight() {
 	// console.log('Continuous highlighting is enabled.');

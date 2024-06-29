@@ -1,7 +1,7 @@
 import MainUI from '$lib/MainUI';
 
 function render() {
-	const target = document.getElementById("root");
+	const target = document.body;
 
 	if (target) {
 		new MainUI({

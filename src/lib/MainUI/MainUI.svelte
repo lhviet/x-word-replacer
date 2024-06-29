@@ -1,14 +1,18 @@
 <style lang="scss">
+    .popup-body {
+        flex: 1;
+        overflow-y: auto;
+    }
     // Scrollbar Styling
     .popup-body::-webkit-scrollbar {
-        width: 12px; /* Adjust width of scrollbar */
+        width: 8px; /* Adjust width of scrollbar */
         background-color: rgba(204, 233, 217, 0.75);
     }
 
     /* Set the thumb (the draggable part) color */
     .popup-body::-webkit-scrollbar-thumb {
         background-color: #808080; /* Adjust to your desired thumb color */
-        border-radius: 4px; /* optional: add border radius for rounded thumb */
+        border-radius: 3px; /* optional: add border radius for rounded thumb */
     }
 
     /* Set the track (the non-draggable part) color */
@@ -17,8 +21,6 @@
     }
 
     footer {
-        padding: 5px 10px;
-
         label {
             font-size: .9rem;
             font-weight: 300;
@@ -48,7 +50,7 @@
 
     import { getCurrentTab } from '$lib/chrome-helper/tab';
     import { colorPalettes } from '$lib/colors';
-    import { appState, searchConfigState, searchReplaceState } from '$lib/stores';
+    import { appState, localAppState, searchConfigState, searchReplaceState } from '$lib/stores';
     import TransparentBtn from '$lib/components/TransparentBtn';
     import UltraNotesBtn from '$lib/components/UltraNotesBtn';
 
@@ -158,25 +160,29 @@
 </script>
 
 <!-- Hearder -->
-<div class='p-2 flex justify-between items-center'>
-    <img src={chrome.runtime.getURL('static/images/icon_128.png')} width="35" height="35" />
-
-    {#if $appState.loading}
-        <div style='display: inline-block; margin-left: 10px;'>
-            Loading...
+<div>
+    <div class='p-2 flex justify-between items-center'>
+        <div class="flex gap-1 items-center">
+            <img src={chrome.runtime.getURL('static/images/icon_128.png')} width="35" height="35" />
+            <Switch class="h-5 align-middle data-[state=checked]:bg-blue-500" bind:checked={$localAppState.floatingBtn} />
         </div>
-    {/if}
 
-    <div>
-        <div class="inline-block mr-2"><UltraNotesBtn /></div>
-        <Button on:click={onClickSearchAndReplace}>Replace</Button>
+        {#if $appState.loading}
+            <div style='display: inline-block; margin-left: 10px;'>
+                Loading...
+            </div>
+        {/if}
+
+        <div>
+            <div class="inline-block mr-2"><UltraNotesBtn /></div>
+            <Button on:click={onClickSearchAndReplace}>Replace</Button>
+        </div>
     </div>
+    <Separator class="bg-slate-300" />
 </div>
 
-<Separator class="bg-slate-300" />
-
 <!-- Body -->
-<div class='popup-body max-h-[410px] overflow-y-scroll p-3 pr-0'>
+<div class='popup-body overflow-y-auto pr-1'>
     <Table.Root>
         <Table.Header>
             <Table.Row>
@@ -227,10 +233,10 @@
     </Table.Root>
 </div>
 
-<Separator class="bg-slate-300" />
-
 <footer class="relative">
-    <table>
+    <Separator class="bg-slate-300" />
+    <div class="py-1 px-2">
+        <table>
         <tbody>
         <tr>
             <td style="width: 190px;">
@@ -273,7 +279,7 @@
                     </tbody>
                 </table>
             </td>
-            <td style='text-align:center;'><h4>Help us to improve this app...</h4>
+            <td style='text-align:center;'><h4>Help maintaining this app</h4>
                 <form class='form-donate' action='https://www.paypal.com/cgi-bin/webscr' method='post' target='_blank'
                       style='display:inline-table;'>
                     <input type='hidden' name='cmd' value='_s-xclick' />
@@ -303,4 +309,5 @@
         </tr>
         </tbody>
     </table>
+    </div>
 </footer>
