@@ -1,5 +1,6 @@
 import { type Writable, writable } from "svelte/store";
 import { colorPalettes } from "$lib/colors";
+import { continuousHighlight, stopObserving } from '../content-scripts/replacer';
 
 export interface AppState {
   loading: boolean;
@@ -28,6 +29,14 @@ export interface SearchConfig {
 
   // to highlight all occurrences of the search term automatically
   autoHighlight: boolean;
+}
+
+export interface SearchResult {
+  [key: string]: HighlightResult;
+}
+export interface HighlightResult {
+  matches: Set<string>;
+  total: number;
 }
 
 // --------- SVELTE STORAGE ----------
@@ -138,11 +147,21 @@ function startAutoSaving() {
 
   searchConfigState.subscribe(async (searchConfig) => {
     await chrome.storage.sync.set({ searchConfig });
+
+    if (searchConfig.autoHighlight) {
+      continuousHighlight();
+    } else {
+      stopObserving();
+    }
   })
 
+  // Auto remove item that has empty fields in search and replace
   searchReplaceState.subscribe(async (searchReplace) => {
-    // Auto remove item that has empty fields in search and replace
-    const filteredSearchReplace = searchReplace.filter((item) => item.search !== '' || item.replace !== '');
-    await chrome.storage.sync.set({ searchReplace: filteredSearchReplace });
+    removeEmtpyFields(searchReplace);
   })
+}
+
+async function removeEmtpyFields(searchReplace: SearchReplace[]) {
+  const filteredSearchReplace = searchReplace.filter((item) => item.search !== '' || item.replace !== '');
+  await chrome.storage.sync.set({ searchReplace: filteredSearchReplace });
 }

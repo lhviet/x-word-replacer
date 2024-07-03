@@ -63,7 +63,7 @@
         position: absolute;
         left: -13px;
         bottom: 15%;
-        background-color: rgb(255 255 255 / 75%);
+        background-color: rgba(255, 255, 255, 0.1);
         border: none;
         border-radius: 50%;
         width: 24px;
@@ -82,6 +82,6 @@
     }
 
     .toggle-button:hover {
-        background-color: #f0f0f0;
+        background-color: rgba(255, 255, 255, 0.7);
     }
 </style>

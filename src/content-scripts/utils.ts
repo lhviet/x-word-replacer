@@ -3,7 +3,7 @@
 // INFO: this function is used when we want to convert a normal string, that may contain
 // special characters, i.e., dot `.`, into a regex string. In that case, to keep the dot as a dot,
 // we need to escape it. I.e., `.` -> `\.`
-import type { SearchConfig, SearchReplace } from '$lib/stores';
+import type { HighlightResult, SearchConfig, SearchReplace, SearchResult } from '$lib/stores';
 import { throttle } from '$utils/throttle';
 
 export const RegExEscape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -30,9 +30,15 @@ export const getColorHTMLElement = (highlightColor, count, searchValue, replaceV
 }
 
 export function doReplaceInputs(inputs, searchRegex, replace) {
-	let count = 0;
+	const highlightResult: HighlightResult = {
+		matches: new Set(),
+		total: 0,
+	};
+
 	const replaceAndCount = (match) => {
-		count++;
+		highlightResult.matches.add(match.toString());
+		highlightResult.total++;
+
 		return replace;
 	}
 
@@ -44,19 +50,25 @@ export function doReplaceInputs(inputs, searchRegex, replace) {
 		}
 	}
 
-	return count;
+	return highlightResult;
 }
 
 export function doReplaceInIframe(iframe, searchRegex, replace, textInputFields, webpage, color) {
-	let count = 0;
+	const highlightResult: HighlightResult = {
+		matches: new Set(),
+		total: 0,
+	};
+
 	const replaceAndCount = (match) => {
-		count++;
-		return getColorHTMLElement(color, count, match, replace);
+		highlightResult.matches.add(match.toString());
+		highlightResult.total++;
+
+		return getColorHTMLElement(color, highlightResult.total, match, replace);
 	}
 
 	const iframeDocument = iframe.contentDocument?.documentElement;
 
-	if (!iframeDocument) return count;
+	if (!iframeDocument) return highlightResult;
 
 	try {
 		// INFO: innerHTML's scope
@@ -72,16 +84,19 @@ export function doReplaceInIframe(iframe, searchRegex, replace, textInputFields,
 			const inputElems = iframeDocument.getElementsByTagName('input');
 			const textAreaElems = iframeDocument.getElementsByTagName('textarea');
 
-			count += doReplaceInputs([
+			const inputResult = doReplaceInputs([
 				...inputElems,
 				...textAreaElems,
 			], searchRegex, replace);
+
+			highlightResult.matches = new Set([...highlightResult.matches, ...inputResult.matches]);
+			highlightResult.total += inputResult.total;
 		}
 	} catch (e) {
 		console.warn('Failed in doReplaceInIframe:', e);
 	}
 
-	return count;
+	return highlightResult;
 }
 
 function getAllMatchesIndexes(regex, str) {
@@ -90,6 +105,7 @@ function getAllMatchesIndexes(regex, str) {
 
 	while ((match = regex.exec(str)) !== null) {
 		matches.push({
+			match,
 			start: match.index,
 			end: match.index + match[0].length
 		});
@@ -115,13 +131,27 @@ function getAllMatchesIndexes(regex, str) {
  * let element = document.getElementById('plugins-overview');
  * replaceTextWithElement(element, 'Overview', 'span');
  */
-export function replaceTextWithElement(resultObj, elementNode, regexSearchValue, replaceValue, searchTextInputs, webpage) {
+export function replaceTextWithElement(
+	highlightResult: HighlightResult,
+	elementNode,
+	regexSearchValue,
+	replaceValue,
+	searchTextInputs,
+	webpage
+) {
 	// Iterate through all child nodes of the element and search or replace text with the given regex searchValue
 	const shouldProcessInputs = searchTextInputs;
 
 	// INFO: we should use Array.from to convert NodeList to Array to avoid the live NodeList
 	// It means that if we update/remove a child from the NodeList, the NodeList will be updated.
 	const childrenNodes = Array.from(elementNode.childNodes);
+
+	const customReplaceAndCount = (match) => {
+		highlightResult.matches.add(match.toString());
+		highlightResult.total++;
+
+		return replaceValue;
+	}
 
 	for (let i = 0; i < childrenNodes.length; i++) {
 		const child = childrenNodes[i];
@@ -135,27 +165,27 @@ export function replaceTextWithElement(resultObj, elementNode, regexSearchValue,
 					// Do nothing if users want to highlight the text (search), instead of replace it
 					continue;
 				}
-				child.value = child.value.replace(regexSearchValue, replaceValue);
+				child.value = child.value.replace(regexSearchValue, customReplaceAndCount);
 				// TODO: Handle input and textarea elements with highlight (search results to be shown to users against a regex/search)
 			}
 			// Update iframe elements
 			else if (tagName === 'iframe') {
 				try {
 					let iframeDoc = child.contentDocument || child.contentWindow.document;
-					replaceTextWithElement(resultObj, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, webpage);
+					replaceTextWithElement(highlightResult, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, webpage);
 				} catch (e) {
 					console.warn('Cannot access iframe contents:', e);
 				}
 
 			} else if (tagName !== 'canvas') {
 				// Recursively call the function on child elements
-				replaceTextWithElement(resultObj, child, regexSearchValue, replaceValue, searchTextInputs, webpage);
+				replaceTextWithElement(highlightResult, child, regexSearchValue, replaceValue, searchTextInputs, webpage);
 			}
 		}
 		else if (webpage && child.nodeType === Node.TEXT_NODE) {
 			const text = child.nodeValue;
 			// Replace with plain text
-			child.nodeValue = text.replace(regexSearchValue, replaceValue);
+			child.nodeValue = text.replace(regexSearchValue, customReplaceAndCount);
 		}
 	}
 }
@@ -181,7 +211,7 @@ export const getItemColor = (item: SearchReplace) => ({
 
 const HIGHLIGHT_ALPHA = 1;
 export function highlightWithCanvas(
-	resultObj: object,
+	searchResult: SearchResult,
 	elementNode: HTMLElement,
 	activeItems: SearchReplace[],
 	searchConfig: SearchConfig,
@@ -211,7 +241,7 @@ export function highlightWithCanvas(
 				try {
 					const iframeDoc = iFrameElement.contentDocument || iFrameElement.contentWindow?.document;
 					if (iframeDoc?.body) {
-						highlightWithCanvas(resultObj, iframeDoc.body, activeItems, searchConfig);
+						highlightWithCanvas(searchResult, iframeDoc.body, activeItems, searchConfig);
 					}
 				} catch (e) {
 					console.warn('Cannot access iframe contents:', e);
@@ -219,7 +249,7 @@ export function highlightWithCanvas(
 
 			} else if (tagName !== 'canvas') {
 				// Recursively call the function on child elements
-				highlightWithCanvas(resultObj, child, activeItems, searchConfig);
+				highlightWithCanvas(searchResult, child, activeItems, searchConfig);
 			}
 		}
 		else if (childrenNodes[i].nodeType === Node.TEXT_NODE) {
@@ -231,13 +261,12 @@ export function highlightWithCanvas(
 
 				// Highlight the matches with canvas solution
 				const matches = getAllMatchesIndexes(searchRegex, text);
-				resultObj[item.search] = (resultObj[item.search] || 0) + matches.length;
 
 				if (matches.length > 0) {
 					// Calculate the relative position of the text node to the container and store the rectangle for drawing later
 					const containerRect = elementNode.getBoundingClientRect();
-					for (const match of matches) {
-						const rect = getHighlightRectangle(child, match.start, match.end);
+					for (const m of matches) {
+						const rect = getHighlightRectangle(child, m.start, m.end);
 						const relativeX = rect.left - containerRect.left;
 						const relativeY = rect.top - containerRect.top;
 						canvasDrawingRects.push({
@@ -247,8 +276,11 @@ export function highlightWithCanvas(
 							height: rect.height,
 							backgroundColor: item.backgroundColor,
 						});
+
+						searchResult[item.search].matches.add(m.match.toString());
 					}
 				}
+				searchResult[item.search].total += matches.length;
 			}
 		}
 	}
@@ -317,7 +349,7 @@ const clearCanvas = (canvas: HTMLCanvasElement) => {
 }
 
 function getOrCreateHighlightCanvas(container: HTMLElement) {
-	// TODO: Check if the canvas already exists
+	// INFO: Check if the canvas already exists
 	let canvas = findContainerCanvas(container);
 	if (!canvas) {
 		// Adjust the container's position and z-index

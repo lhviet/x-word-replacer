@@ -1,29 +1,32 @@
 import * as utils from './utils';
-import type { SearchConfig, SearchReplace } from '$lib/stores';
+import type { HighlightResult, SearchConfig, SearchReplace, SearchResult } from '$lib/stores';
 import { throttle } from '$utils/throttle';
 
 function searchAndReplace(item, searchConfig) {
 	const { textInputFields, webpage, regex, matchCase, html } = searchConfig;
 	const { search, replace } = item;
 
+	// using an object to hold the highlightResult globally, that is used in recursive functions
+	const highlightResult: HighlightResult = {
+		matches: new Set(),
+		total: 0,
+	};
+
 	const searchRegex = utils.getSearchRegex(search, searchConfig);
 	if (!searchRegex) {
-		return 0;
+		return highlightResult;
 	}
-
-	// using an object to hold the count result globally, that is used in recursive functions
-	const result = { count: 0 };
 
 	const body = document.body;
 
 	if (!html) {
 		// Replace words in the current document body by checking each DOM Element Node
-		utils.replaceTextWithElement(result, body, searchRegex, replace, textInputFields, webpage);
-
+		utils.replaceTextWithElement(highlightResult, body, searchRegex, replace, textInputFields, webpage);
 	} else {
 		if (webpage) {
 			const replaceAndCount = (match) => {
-				result.count++;
+				highlightResult.matches.add(match.toString());
+				highlightResult.total++;
 				return replace;
 			};
 			// Replace words in the current document body
@@ -33,28 +36,34 @@ function searchAndReplace(item, searchConfig) {
 		// Replace words in the current document body by using innerHTML
 		const iframes = document.querySelectorAll('iframe');
 		for (const iframe of iframes) {
-			result.count += utils.doReplaceInIframe(iframe, searchRegex, replace, textInputFields, webpage);
+			const iframeResult = utils.doReplaceInIframe(iframe, searchRegex, replace, textInputFields, webpage);
+
+			highlightResult.matches = new Set([...highlightResult.matches, ...iframeResult.matches]);
+			highlightResult.total += iframeResult.total;
 		}
 
 		if (textInputFields) {
 			// INFO: Only replace words in input fields, no search and highlight for inputs
 			const inputElems = document.getElementsByTagName('input');
 			const textAreaElems = document.getElementsByTagName('textarea');
-			result.count += utils.doReplaceInputs([
+			const inputResult = utils.doReplaceInputs([
 				...inputElems,
 				...textAreaElems,
 			], searchRegex, replace);
+
+			highlightResult.matches = new Set([...highlightResult.matches, ...inputResult.matches]);
+			highlightResult.total += inputResult.total;
 		}
 	}
 
-	return result.count;
+	return highlightResult;
 }
 
 function searchAndHighlight(activeItems: SearchReplace[], searchConfig: SearchConfig) {
 	const { textInputFields, webpage, html } = searchConfig;
 
-	// using an object to hold the count result globally, that is used in recursive functions
-	const result: any = {};
+	// using an object to hold the count searchResult globally, that is used in recursive functions
+	const searchResult: SearchResult = {};
 
 	if (html) {
 		// Replace words in the current document body by modifying innerHTML to include highlight dom elements
@@ -67,14 +76,15 @@ function searchAndHighlight(activeItems: SearchReplace[], searchConfig: SearchCo
 			const color = utils.getItemColor(item);
 			const { search, replace } = item;
 
+			searchResult[search] = { matches: new Set(), total: 0 };
+
 			if (webpage) {
 				// Replace words in the current document body using innerHTML
-				const replaceAndCount = (match: string) => {
-					if (!result[search]) {
-						result[search] = 0;
-					}
-					result[search]++;
-					return utils.getColorHTMLElement(color, result[search], match, replace);
+				const replaceAndCount = (match) => {
+					searchResult[search].matches.add(match.toString());
+					searchResult[search].total++;
+
+					return utils.getColorHTMLElement(color, searchResult[search], match, replace);
 				};
 				document.body.innerHTML = document.body.innerHTML.replace(searchRegex, replaceAndCount);
 			}
@@ -82,17 +92,22 @@ function searchAndHighlight(activeItems: SearchReplace[], searchConfig: SearchCo
 			// processing iframes
 			const iframes = document.querySelectorAll('iframe');
 			for (const iframe of iframes) {
-				result[search] = utils.doReplaceInIframe(iframe, searchRegex, replace, textInputFields, webpage, color);
+				const iframeResult = utils.doReplaceInIframe(iframe, searchRegex, replace, textInputFields, webpage, color);
+				searchResult[search].matches = new Set([...searchResult[search].matches, ...iframeResult.matches]);
+				searchResult[search].total += iframeResult.total;
 			}
 		}
 	}
 	else {
 		// No matter webpage or textInputFields, we highlight the text in the current document body
 		// Replace words in the current document body by checking each DOM Element Node
-		utils.highlightWithCanvas(result, document.body, activeItems, searchConfig);
+		for (const item of activeItems) {
+			searchResult[item.search] = searchResult[item.search] || { matches: new Set(), total: 0 };
+		}
+		utils.highlightWithCanvas(searchResult, document.body, activeItems, searchConfig);
 	}
 
-	return result;
+	return searchResult;
 }
 
 export async function getActiveSearchReplaceItems() {
@@ -105,30 +120,31 @@ export async function getActiveSearchReplaceItems() {
 }
 
 export async function doSearchAndReplace() {
-	const result = {};
+	const result: SearchResult = {};
 
 	const { activeItems, searchConfig } = await getActiveSearchReplaceItems();
 
 	// Create an array of promises for parallel execution
 	const promises = activeItems.map(async item => {
-		const replacementCount = await searchAndReplace(item, searchConfig);
-		return { search: item.search, replacementCount };
+		const highlightResult = await searchAndReplace(item, searchConfig);
+		return { search: item.search, ...highlightResult };
 	});
 
 	// Await all promises to resolve
 	const results = await Promise.all(promises);
 
 	// Construct the result object
-	results.forEach(({ search, replacementCount }) => {
-		result[search] = replacementCount;
+	results.forEach(({ search, matches, total }) => {
+		result[search] = { matches, total };
 	});
+	console.log('doSearchAndReplace result:', result);
 
 	return result;
 }
 
-export async function doSearchAndHighlight(observer?: MutationObserver) {
+export async function doSearchAndHighlight() {
 	// console.log('doSearchAndHighlight is called.');
-	observer?.disconnect();  // Temporarily disconnect the observer to avoid infinite loop
+	stopObserving();  // Temporarily disconnect the observer to avoid infinite loop
 
 	// INFO: Remove the existing highlighting canvas if it exists, to redraw the highlights freshly
 	// The use case is if DOM is updated, we redraw new findings correctly
@@ -138,9 +154,10 @@ export async function doSearchAndHighlight(observer?: MutationObserver) {
 
 	const { activeItems, searchConfig } = await getActiveSearchReplaceItems();
 
-	const result = searchAndHighlight(activeItems, searchConfig);
+	const result: SearchResult = searchAndHighlight(activeItems, searchConfig);
+	console.log('doSearchAndHighlight result:', result);
 
-	startObserving(observer);
+	startObserving();
 
 	return result;
 }
@@ -160,6 +177,8 @@ let throttleLimit = 600;
 let isThrottled = false;
 let increaseThrottleTimeout;
 let resetThrottleTimeout;
+
+let observer: MutationObserver;
 
 function checkCallFrequency() {
 	// Remove timestamps older than SIX_SECONDS
@@ -188,12 +207,12 @@ function checkCallFrequency() {
 
 // Throttle the doSearchAndHighlight function
 function setupThrottledHighlight(milliseconds: number) {
-	return throttle((observer?: MutationObserver) => {
+	return throttle(() => {
 		const now = Date.now();
 		// Add current timestamp
 		callTimestamps.push(now);
 
-		doSearchAndHighlight(observer);
+		doSearchAndHighlight();
 	}, milliseconds);
 }
 let throttledSearchReplace = setupThrottledHighlight(throttleLimit);
@@ -201,7 +220,7 @@ let throttledSearchReplace = setupThrottledHighlight(throttleLimit);
 // Start the periodic check
 checkCallFrequency();
 
-const startObserving = (observer?: MutationObserver) => {
+const startObserving = () => {
 	observer?.observe(document.body, {
 		attributes: true,	// Monitor attribute changes in Element, i.e., display style, position, etc.
 		childList: true,	// Monitor child changes in Element, i.e., adding or removing child nodes
@@ -210,15 +229,19 @@ const startObserving = (observer?: MutationObserver) => {
 	});
 }
 
+export const stopObserving = () => {
+	observer?.disconnect();
+}
+
 export async function continuousHighlight() {
 	// console.log('Continuous highlighting is enabled.');
 	window.addEventListener('load', () => throttledSearchReplace());
 	document.addEventListener('DOMContentLoaded', () => throttledSearchReplace());
 
 	// INFO: we don't monitor the network request because DOM observer seems good enough for this use case
-	const observer = new MutationObserver(() => {
+	observer = new MutationObserver(() => {
 		// console.log('DOM mutation detected.');
-		throttledSearchReplace(observer);
+		throttledSearchReplace();
 	});
-	startObserving(observer);
+	startObserving();
 }

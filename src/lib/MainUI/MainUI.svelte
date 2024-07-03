@@ -189,8 +189,7 @@
                 <Table.Head class="w-[1rem] text-left p-1">#</Table.Head>
                 <Table.Head class="w-[1rem] p-1"></Table.Head>
                 <Table.Head class="text-slate-800 p-1">
-                    Search and
-                    <Switch class="h-auto align-middle data-[state=checked]:bg-slate-400" bind:checked={$searchConfigState.autoHighlight} /> auto
+                    <Switch class="h-auto align-middle data-[state=checked]:bg-slate-400" bind:checked={$searchConfigState.autoHighlight} /> Auto
                     <Button class="bg-yellow-300 hover:bg-yellow-400 border-slate-400 border-[1px] text-primary px-2 py-1 h-7 ml-1" on:click={onClickSearchAndHighlight}>Highlight</Button>
                 </Table.Head>
                 <Table.Head class="w-auto p-0"></Table.Head>
