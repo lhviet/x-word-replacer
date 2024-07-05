@@ -209,7 +209,7 @@ export const getItemColor = (item: SearchReplace) => ({
 	textColor: item.textColor,
 });
 
-const HIGHLIGHT_ALPHA = 1;
+const HIGHLIGHT_ALPHA = 0.8;
 export function highlightWithCanvas(
 	searchResult: SearchResult,
 	elementNode: HTMLElement,

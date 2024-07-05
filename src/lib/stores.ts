@@ -17,7 +17,7 @@ export interface SearchReplace {
   replace: string;
   backgroundColor?: string;
   textColor?: string;
-  count?: number;
+  result: ArrayHighlightResult;
 }
 
 export interface SearchConfig {
@@ -38,6 +38,9 @@ export interface HighlightResult {
   matches: Set<string>;
   total: number;
 }
+export interface ArrayHighlightResult extends Omit<HighlightResult, 'matches'> {
+  matches: string[];
+}
 
 // --------- SVELTE STORAGE ----------
 
@@ -57,9 +60,10 @@ export const searchReplaceState: Writable<SearchReplace[]> = writable([
     replace: '',
     backgroundColor: '',
     textColor: '',
-    count: 0,
+    result: {},
   }
 ]);
+
 export const searchConfigState: Writable<SearchConfig> = writable({
   matchCase: false,
   regex: false,
@@ -107,7 +111,7 @@ export async function initStorage() {
       replace: '',
       backgroundColor: colorPalettes[0][0],
       textColor: colorPalettes[0][1],
-      count: 0,
+      result: {},
     });
   } else {
     // If there is no color in the searchReplace, set the default color

@@ -1,5 +1,10 @@
 import * as utils from './utils';
-import type { HighlightResult, SearchConfig, SearchReplace, SearchResult } from '$lib/stores';
+import {
+	type HighlightResult,
+	type SearchConfig,
+	type SearchReplace,
+	type SearchResult,
+} from '$lib/stores';
 import { throttle } from '$utils/throttle';
 
 function searchAndReplace(item, searchConfig) {
@@ -120,8 +125,6 @@ export async function getActiveSearchReplaceItems() {
 }
 
 export async function doSearchAndReplace() {
-	const result: SearchResult = {};
-
 	const { activeItems, searchConfig } = await getActiveSearchReplaceItems();
 
 	// Create an array of promises for parallel execution
@@ -134,10 +137,13 @@ export async function doSearchAndReplace() {
 	const results = await Promise.all(promises);
 
 	// Construct the result object
+	const result = {};
 	results.forEach(({ search, matches, total }) => {
-		result[search] = { matches, total };
+		result[search] = {
+			matches: Array.from(matches),
+			total
+		};
 	});
-	console.log('doSearchAndReplace result:', result);
 
 	return result;
 }
@@ -154,11 +160,15 @@ export async function doSearchAndHighlight() {
 
 	const { activeItems, searchConfig } = await getActiveSearchReplaceItems();
 
-	const result: SearchResult = searchAndHighlight(activeItems, searchConfig);
-	console.log('doSearchAndHighlight result:', result);
+	const searchResult: SearchResult = searchAndHighlight(activeItems, searchConfig);
+	// console.log('doSearchAndHighlight result:', result);
 
 	startObserving();
 
+	const result = {}
+	for (const [key, value] of Object.entries(searchResult)) {
+		result[key] = { matches: Array.from(value.matches), total: value.total };
+	}
 	return result;
 }
 

@@ -9,7 +9,9 @@ export default defineManifest(async (env) => ({
 	description: description,
 	version: version,
 	version_name: version,
-	permissions: ['storage'],
+	permissions: [
+		'storage'
+	],
 	icons: {
 		128: 'static/favicon.png'
 	},
