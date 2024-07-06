@@ -150,13 +150,8 @@ function startAutoSaving() {
   });
 
   searchConfigState.subscribe(async (searchConfig) => {
+    // console.log('searchConfig', searchConfig);
     await chrome.storage.sync.set({ searchConfig });
-
-    if (searchConfig.autoHighlight) {
-      continuousHighlight();
-    } else {
-      stopObserving();
-    }
   })
 
   // Auto remove item that has empty fields in search and replace
@@ -169,3 +164,14 @@ async function removeEmtpyFields(searchReplace: SearchReplace[]) {
   const filteredSearchReplace = searchReplace.filter((item) => item.search !== '' || item.replace !== '');
   await chrome.storage.sync.set({ searchReplace: filteredSearchReplace });
 }
+
+chrome.storage.sync.onChanged.addListener((changes) => {
+  if (changes.searchConfig) {
+    const { newValue } = changes.searchConfig;
+    if (newValue.autoHighlight) {
+      continuousHighlight();
+    } else {
+      stopObserving();
+    }
+  }
+});

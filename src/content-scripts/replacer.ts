@@ -150,7 +150,7 @@ export async function doSearchAndReplace() {
 
 export async function doSearchAndHighlight() {
 	// console.log('doSearchAndHighlight is called.');
-	stopObserving();  // Temporarily disconnect the observer to avoid infinite loop
+	observer?.disconnect();  // Temporarily disconnect the observer to avoid infinite loop
 
 	// INFO: Remove the existing highlighting canvas if it exists, to redraw the highlights freshly
 	// The use case is if DOM is updated, we redraw new findings correctly
@@ -163,74 +163,102 @@ export async function doSearchAndHighlight() {
 	const searchResult: SearchResult = searchAndHighlight(activeItems, searchConfig);
 	// console.log('doSearchAndHighlight result:', result);
 
-	startObserving();
-
 	const result = {}
 	for (const [key, value] of Object.entries(searchResult)) {
 		result[key] = { matches: Array.from(value.matches), total: value.total };
 	}
+
+	callTimestamps.push(Date.now());
+
+	// INFO: somehow if we call startObserving in this function, it will create an infinite loop
+	setTimeout(startObserving, 200);
+
 	return result;
 }
 
 // Continuous highlighting ------------------------------
 
-// INFO: Initial Throttle Limit: Start with a throttle limit of 600ms.
-// Periodic Check: Every 6 seconds, check if the function has been called more than 8 times.
-// Increase Throttle: If the function is called more than 3 times in 5 seconds, increase the throttle limit to FIVE_SECONDS.
-// Reset Throttle: After 30 seconds from increasing the throttle limit, reset it back to 600ms and continue the checking process.
-const FIVE_SECONDS = 5000;
-const SIX_SECONDS = 6000;
-const THIRTY_SECONDS = 30000;
-const CALL_LIMIT = 8;
-let callTimestamps: number[] = [];
-let throttleLimit = 600;
+// INFO: Initial Throttle Limit: Start with a throttle limit of LOW_THROTTLE_MILLISECONDS.
+// Periodic Check: Every CHECK_FREQUENCY_MILLISECONDS, check if the function has been called more than CALL_LIMIT times.
+// Increase Throttle:
+// 		If the function is called more than CALL_LIMIT times in CHECK_FREQUENCY_MILLISECONDS,
+// 		increase the throttle limit to HIGH_THROTTLE_MILLISECONDS.
+// Reset Throttle:
+// 		After RESET_THRESHOLD_MILLISECONDS from increasing the throttle limit,
+// 		reset it back to LOW_THROTTLE_MILLISECONDS and continue the checking process.
+const LOW_THROTTLE_MILLISECONDS = 600;
+const HIGH_THROTTLE_MILLISECONDS = 3000;
+const CHECK_FREQUENCY_MILLISECONDS = 3000;
+const RESET_THRESHOLD_MILLISECONDS = 15000;
+const CALL_LIMIT = 3;
+
+// Variables
+let callTimestamps = [];
+let throttleLimit = LOW_THROTTLE_MILLISECONDS;
 let isThrottled = false;
-let increaseThrottleTimeout;
+let checkIntervalId;
 let resetThrottleTimeout;
 
-let observer: MutationObserver;
+let throttledSearchReplace = throttle(doSearchAndHighlight, throttleLimit);
 
 function checkCallFrequency() {
-	// Remove timestamps older than SIX_SECONDS
-	callTimestamps = callTimestamps.filter(timestamp => Date.now() - timestamp <= SIX_SECONDS);
+	const now = Date.now();
+	// Remove timestamps older than CHECK_FREQUENCY_MILLISECONDS
+	callTimestamps = callTimestamps.filter(timestamp => {
+		const gap = now - timestamp;
+		return gap <= CHECK_FREQUENCY_MILLISECONDS
+	});
 
-	// Check if there have been more than CALL_LIMIT calls in the last SIX_SECONDS
+	// Check if there have been more than CALL_LIMIT calls in the last CHECK_FREQUENCY_MILLISECONDS
 	if (callTimestamps.length > CALL_LIMIT && !isThrottled) {
-		// Increase the throttle limit to FIVE_SECONDS
-		throttleLimit = FIVE_SECONDS;
+		// Increase the throttle limit
+		throttleLimit = HIGH_THROTTLE_MILLISECONDS;
 		isThrottled = true;
-		throttledSearchReplace = setupThrottledHighlight(throttleLimit);
-		// console.log("Throttle limit increased to FIVE_SECONDS");
+		updateThrottledFunction();
+		// console.log(`Throttle limit increased to ${HIGH_THROTTLE_MILLISECONDS} ms.`);
 
-		// Reset the throttle limit to 600 ms after THIRTY_SECONDS
-		resetThrottleTimeout = setTimeout(() => {
-			throttleLimit = 600;
-			isThrottled = false;
-			throttledSearchReplace = setupThrottledHighlight(throttleLimit);
-			// console.log("Throttle limit reset to 600 ms");
-		}, THIRTY_SECONDS);
+		// Schedule reset of throttle limit
+		clearTimeout(resetThrottleTimeout);
+		resetThrottleTimeout = setTimeout(resetThrottle, RESET_THRESHOLD_MILLISECONDS);
 	}
-
-	// Schedule the next check in SIX_SECONDS
-	increaseThrottleTimeout = setTimeout(checkCallFrequency, SIX_SECONDS);
 }
 
-// Throttle the doSearchAndHighlight function
-function setupThrottledHighlight(milliseconds: number) {
-	return throttle(() => {
-		const now = Date.now();
-		// Add current timestamp
-		callTimestamps.push(now);
-
-		doSearchAndHighlight();
-	}, milliseconds);
+function resetThrottle() {
+	throttleLimit = LOW_THROTTLE_MILLISECONDS;
+	isThrottled = false;
+	updateThrottledFunction();
+	// console.log(`Throttle limit reset to ${LOW_THROTTLE_MILLISECONDS} ms.`);
 }
-let throttledSearchReplace = setupThrottledHighlight(throttleLimit);
 
-// Start the periodic check
-checkCallFrequency();
+function updateThrottledFunction() {
+	throttledSearchReplace = throttle(doSearchAndHighlight, throttleLimit);
+}
 
+function startDynamicThrottling() {
+	// console.log('Starting dynamic throttling...'); // Debug log
+	// Clear any existing interval to avoid duplicates
+	if (checkIntervalId) {
+		clearInterval(checkIntervalId);
+	}
+	// Start the periodic check
+	checkIntervalId = setInterval(checkCallFrequency, CHECK_FREQUENCY_MILLISECONDS);
+}
+
+function stopDynamicThrottling() {
+	// console.log('Stopping dynamic throttling...'); // Debug log
+	if (checkIntervalId) {
+		clearInterval(checkIntervalId);
+		checkIntervalId = null;
+	}
+	clearTimeout(resetThrottleTimeout);
+}
+
+// Usage
+startDynamicThrottling();
+
+let observer: MutationObserver;
 const startObserving = () => {
+	// console.log('Starting DOM observer...'); // Debug log
 	observer?.observe(document.body, {
 		attributes: true,	// Monitor attribute changes in Element, i.e., display style, position, etc.
 		childList: true,	// Monitor child changes in Element, i.e., adding or removing child nodes
@@ -239,19 +267,58 @@ const startObserving = () => {
 	});
 }
 
+const domListener = () => throttledSearchReplace();
+
 export const stopObserving = () => {
+	document.removeEventListener('DOMContentLoaded', domListener);
 	observer?.disconnect();
+	stopDynamicThrottling();
 }
 
 export async function continuousHighlight() {
 	// console.log('Continuous highlighting is enabled.');
-	window.addEventListener('load', () => throttledSearchReplace());
-	document.addEventListener('DOMContentLoaded', () => throttledSearchReplace());
+	stopObserving();
+	doSearchAndHighlight();
+	document.addEventListener('DOMContentLoaded', domListener);
 
 	// INFO: we don't monitor the network request because DOM observer seems good enough for this use case
-	observer = new MutationObserver(() => {
-		// console.log('DOM mutation detected.');
+	observer = new MutationObserver((mutations) => {
+		// logMutations(mutations);
+
 		throttledSearchReplace();
 	});
 	startObserving();
+}
+
+function logMutations(mutations: MutationRecord[]) {
+	if (mutations.length > 0) {
+		console.group('DOM Mutation detected:');
+	}
+	mutations.forEach(mutation => {
+		console.log('Type:', mutation.type);
+
+		switch (mutation.type) {
+			case 'attributes':
+				console.log('Target:', mutation.target);
+				console.log('Attribute name:', mutation.attributeName);
+				console.log('Old value:', mutation.oldValue);
+				break;
+			case 'characterData':
+				console.log('Target:', mutation.target);
+				console.log('Old value:', mutation.oldValue);
+				console.log('New value:', mutation.target.textContent);
+				break;
+			case 'childList':
+				console.log('Target:', mutation.target);
+				if (mutation.addedNodes.length > 0) {
+					console.log('Added nodes:', mutation.addedNodes);
+				}
+				if (mutation.removedNodes.length > 0) {
+					console.log('Removed nodes:', mutation.removedNodes);
+				}
+				break;
+		}
+
+		console.groupEnd();
+	});
 }
