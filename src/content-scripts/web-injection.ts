@@ -1,4 +1,5 @@
 import styles from '../styles.scss?inline';
+
 import FloatingButton from '$lib/components/FloatingBtn';
 import SidePanel from '$lib/components/SidePanel';
 import MainUI from '$lib/MainUI';
@@ -15,6 +16,12 @@ const host = document.body;
 if (!host) {
 	console.warn('Could not find body host for Ultra Notes');
 	throw new Error('Could not find body host');
+}
+
+function injectStyles(shadowRoot, styles) {
+	const styleElement = document.createElement('style');
+	styleElement.textContent = styles;
+	shadowRoot.appendChild(styleElement);
 }
 
 async function init() {
@@ -34,9 +41,7 @@ async function init() {
 
 	const shadow = container.attachShadow({ mode: 'closed' });
 
-	const styleElement = document.createElement('style');
-	styleElement.textContent = styles;
-	shadow.appendChild(styleElement);
+	injectStyles(shadow, styles);
 
 	const buttonContainer = document.createElement('div');
 	const panelContainer = document.createElement('div');

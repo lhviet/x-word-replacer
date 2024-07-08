@@ -24,8 +24,6 @@
 </style>
 
 <script lang='ts'>
-    // import '../../styles.scss';
-
     import { appState, searchReplaceState } from '$lib/stores';
 
     import Footer from '$lib/components/Footer';

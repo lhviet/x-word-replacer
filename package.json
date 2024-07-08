@@ -1,6 +1,6 @@
 {
 	"name": "chrome-extension-x-word-replacer",
-	"version": "2.0.1",
+	"version": "2.0.2",
 	"description": "Quickly replacing words in web pages",
 	"type": "module",
 	"scripts": {

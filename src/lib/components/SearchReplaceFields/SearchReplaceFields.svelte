@@ -16,16 +16,18 @@
 	function addNewField() {
 		searchReplaceState.update((state) => {
 			const color = colorPalettes[state.length % colorPalettes.length];
-			state.push({
-				active: true,
-				search: '',
-				replace: '',
-				backgroundColor: color[0],
-				textColor: color[1],
-				result: {}
-			});
-			state.sort((a, b) => b.active - a.active);
-			return state;
+
+			return [
+				{
+					active: true,
+					search: '',
+					replace: '',
+					backgroundColor: color[0],
+					textColor: color[1],
+					result: {}
+				},
+				...state
+			];
 		});
 	}
 
@@ -162,7 +164,7 @@
 	</div>
 
 	{#if field.result?.total && expandedStates[i]}
-		<div transition:slide="{{ duration: 300 }}" class="my-1 mx-8 flex gap-2">
+		<div transition:slide="{{ duration: 300 }}" class="my-1 mx-8 flex gap-2 flex-wrap">
 			{#each field.result.matches as match}
 				<Badge>{match}</Badge>
 			{/each}
