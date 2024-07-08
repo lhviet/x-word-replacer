@@ -3,6 +3,7 @@
 * It will read the DOM, search and replace the text, and send the result back to the service worker.
 * */
 import './styles.scss';
+
 import {
 	continuousHighlight,
 	doSearchAndReplace,

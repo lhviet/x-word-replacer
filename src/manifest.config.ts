@@ -22,7 +22,10 @@ export default defineManifest(async (env) => ({
 				'src/content-scripts/content-script.ts',
 				"src/content-scripts/web-injection.ts",
 				// "src/content-scripts/webpage.ts",
-			]
+			],
+			// css: [
+			// 	'src/content-scripts/styles.scss'
+			// ],
 		}
 	],
 	background: {

@@ -1,4 +1,6 @@
 <style lang="scss">
+    @import '../../styles.scss';
+
     .popup-body {
         flex: 1;
         overflow-y: auto;
@@ -22,7 +24,7 @@
 </style>
 
 <script lang='ts'>
-    import '../../styles.scss';
+    // import '../../styles.scss';
 
     import { appState, searchReplaceState } from '$lib/stores';
 
