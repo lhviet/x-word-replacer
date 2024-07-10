@@ -1,7 +1,7 @@
 {
 	"name": "chrome-extension-x-word-replacer",
-	"version": "2.0.2",
-	"description": "Quickly replacing words in web pages",
+	"version": "2.0.3",
+	"description": "Quickly multi-highlighting and replacing words in web pages",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",

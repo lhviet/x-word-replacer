@@ -113,9 +113,9 @@
   button {
     z-index: 9999;
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 10px;
+    bottom: 15px;
+    right: 15px;
+    padding: 9px;
     background-color: $btnBg;
     color: white;
     border: none;
@@ -129,8 +129,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     transition: box-shadow 0.2s ease, background-color 0.2s ease;
   }
 

@@ -60,7 +60,7 @@ async function init() {
 		},
 	});
 
-	const sidePanel = new SidePanel({
+	new SidePanel({
 		target: panelContainer,
 		props: {
 			component: MainUI,
@@ -72,6 +72,7 @@ async function init() {
 		doSearchAndHighlight();
 		appState.update((state: AppState) => ({ ...state, isPanelOpen: !state.isPanelOpen }));
 	}, 500);
+
 	btn.$on('click', throttledBtnClick);
 }
 

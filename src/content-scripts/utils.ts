@@ -46,7 +46,7 @@ export function doReplaceInputs(inputs, searchRegex, replace) {
 		try {
 			input.value = input.value.replace(searchRegex, replaceAndCount);
 		} catch (e) {
-			console.warn('Failed in doReplaceInputs:', e);
+			// console.warn('Failed in doReplaceInputs:', e);
 		}
 	}
 
@@ -93,7 +93,7 @@ export function doReplaceInIframe(iframe, searchRegex, replace, textInputFields,
 			highlightResult.total += inputResult.total;
 		}
 	} catch (e) {
-		console.warn('Failed in doReplaceInIframe:', e);
+		// console.warn('Failed in doReplaceInIframe:', e);
 	}
 
 	return highlightResult;
@@ -174,7 +174,7 @@ export function replaceTextWithElement(
 					let iframeDoc = child.contentDocument || child.contentWindow.document;
 					replaceTextWithElement(highlightResult, iframeDoc.body, regexSearchValue, replaceValue, searchTextInputs, webpage);
 				} catch (e) {
-					console.warn('Cannot access iframe contents:', e);
+					// console.warn('Cannot access iframe contents:', e);
 				}
 
 			} else if (tagName !== 'canvas') {
@@ -244,7 +244,7 @@ export function highlightWithCanvas(
 						highlightWithCanvas(searchResult, iframeDoc.body, activeItems, searchConfig);
 					}
 				} catch (e) {
-					console.warn('Cannot access iframe contents:', e);
+					// console.warn('Cannot access iframe contents:', e);
 				}
 
 			} else if (tagName !== 'canvas') {
