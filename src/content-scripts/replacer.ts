@@ -257,15 +257,47 @@ function stopDynamicThrottling() {
 startDynamicThrottling();
 
 let observer: MutationObserver;
+
 const startObserving = () => {
-	// console.log('Starting DOM observer...'); // Debug log
-	observer?.observe(document.body, {
-		attributes: true,	// Monitor attribute changes in Element, i.e., display style, position, etc.
-		childList: true,	// Monitor child changes in Element, i.e., adding or removing child nodes
-		subtree: true,	// Monitor all descendants of the target node
-		characterData: true,	// Monitor text changes in TextNode
+	observer?.disconnect();
+	observer = new MutationObserver((mutations) => {
+		let shouldUpdate = false;
+
+		for (const mutation of mutations) {
+			if (mutation.target instanceof HTMLInputElement || mutation.target instanceof HTMLTextAreaElement) {
+				continue; // Skip this mutation, but keep checking others
+			}
+
+			if (mutation.type === 'childList') {
+				const hasRelevantNodes = Array.from(mutation.addedNodes).some(node =>
+					!(node instanceof HTMLInputElement) && !(node instanceof HTMLTextAreaElement)
+				);
+				if (hasRelevantNodes) {
+					shouldUpdate = true;
+					break; // We found a relevant change, no need to check further
+				}
+			} else {
+				// For attributes and characterData mutations on non-input elements
+				shouldUpdate = true;
+				break; // We found a relevant change, no need to check further
+			}
+		}
+
+		if (shouldUpdate) {
+			throttledSearchReplace();
+		}
 	});
-}
+
+	observer.observe(document.body, {
+		attributes: true,
+		childList: true,
+		subtree: true,
+		characterData: true,
+	});
+
+	document.addEventListener('DOMContentLoaded', domListener);
+	startDynamicThrottling();
+};
 
 const domListener = () => throttledSearchReplace();
 
